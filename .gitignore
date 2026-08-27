@@ -51,4 +51,5 @@ yarn-error.log*
 /.nohumans/
 /.agentpaystore/
 /.archtools/
+/.datapointmarket/
 /profile-mundodr/
