@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<style>.h{font:700 56px sans-serif;fill:#183028}.b{font:400 24px sans-serif;fill:#173A2A}.k{font:700 16px sans-serif;letter-spacing:2px;fill:#49AE3D}</style><rect width="1600" height="1000" fill="#F7F3E8"/><rect width="1600" height="130" fill="#173A2A"/>
+<text x="80" y="83" style="font:700 42px sans-serif;fill:white">LEAF BOX / IDENTITY OVERVIEW</text>
+<rect x="80" y="210" width="680" height="350" rx="20" fill="white"/><image href="../assets/leaf-box-logo-transparent.png" x="170" y="300" width="500" height="170" preserveAspectRatio="xMidYMid meet"/>
+<text x="80" y="620" class="k">OFFICIAL LOGO / UNCHANGED</text><text x="80" y="685" class="h">Grow from the mark.</text>
+<text x="80" y="735" class="b">Box geometry. Leaf rhythm. Generous space.</text>
+<g transform="translate(850 220)"><rect width="210" height="150" rx="18" fill="#49AE3D"/><rect x="240" width="210" height="150" rx="18" fill="#173A2A"/><rect x="480" width="210" height="150" rx="18" fill="#A8B99A"/>
+<rect y="220" width="210" height="150" rx="18" fill="#E8F2E3"/><rect x="240" y="220" width="210" height="150" rx="18" fill="#F7F3E8" stroke="#A8B99A"/><rect x="480" y="220" width="210" height="150" rx="18" fill="#C99A61"/>
+<text y="190" class="k">#49AE3D</text><text x="240" y="190" class="k">#173A2A</text><text x="480" y="190" class="k">#A8B99A</text>
+<text y="410" class="k">#E8F2E3</text><text x="240" y="410" class="k">#F7F3E8</text><text x="480" y="410" class="k">#C99A61</text></g>
+<text x="850" y="775" class="k">TYPE SYSTEM</text><text x="850" y="845" class="h">Manrope</text><text x="850" y="900" class="b">Friendly geometry / readable utility</text></svg>

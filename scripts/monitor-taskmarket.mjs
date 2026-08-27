@@ -27,6 +27,16 @@ const trackedItems = [
     submitTxHash:
       "0x0b598da3f4b338f51eef721bdb07585ef869ff4c75d9e920d82b45c2e84ac3a5",
   },
+  {
+    taskId:
+      "0xfc767ac1fd6349c1726d6d7ac37633ba611519d5cedd05f85c15fe6c19f4c90b",
+    submissionId: "1c00eabb-9e5d-4e1f-94a3-244c32361935",
+    submittedAt: "2026-08-27T16:02:53.964Z",
+    deliverableHash:
+      "0x491d427ecb53fbb1ad567da0bedb49932a70d79d4df34647b9b751779575bc05",
+    submitTxHash:
+      "0xa998491c0276dbf3ea82541ef8829536bb5343738a5afcbb62e001b3d1148e77",
+  },
 ];
 
 async function fetchJson(pathname, attempts = 4) {

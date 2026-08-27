@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+<rect width="1200" height="800" fill="#173A2A"/>
+<g fill="none" stroke="#A8B99A" stroke-width="12" opacity=".7">
+<path d="M-80 180Q120 20 320 180T720 180T1120 180T1520 180"/>
+<path d="M-80 440Q120 280 320 440T720 440T1120 440T1520 440"/>
+<path d="M-80 700Q120 540 320 700T720 700T1120 700T1520 700"/>
+</g></svg>

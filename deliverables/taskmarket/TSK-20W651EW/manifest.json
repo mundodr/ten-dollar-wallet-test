@@ -1,0 +1,97 @@
+{
+  "brand": "Leaf Box",
+  "logoPolicy": "Requester-supplied logo preserved; background removal and clear-space crop only.",
+  "fileCount": 18,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2261,
+      "sha256": "ebeb3ebf296cec9e78e4a9d93eca8dac22e43ad38afc3ac8f3099421acf3ba12"
+    },
+    {
+      "path": "assets/leaf-box-logo-original.jpg",
+      "bytes": 32277,
+      "sha256": "c4e8c32a3edf885bb56c8c507afc3a98b8133821b6a50916652a0e5eccc9bf9f"
+    },
+    {
+      "path": "assets/leaf-box-logo-transparent.png",
+      "bytes": 56478,
+      "sha256": "b3fe33d894bf30728f0a2c49847bb4b0bb8327d0a27509ddbb7514bc604c5273"
+    },
+    {
+      "path": "assets/packaging-mockup-blank.png",
+      "bytes": 2217420,
+      "sha256": "d656e7edb2dfca38c48ff9de353bdb995d6de05b322fc06e01cd71215fd29f23"
+    },
+    {
+      "path": "editable-sources/brand-sheet.svg",
+      "bytes": 1732,
+      "sha256": "44bdf1822248f779316f1ad7c004967d3ad0ed18d53fdcfac72b2f5b397c7346"
+    },
+    {
+      "path": "editable-sources/landing-page.svg",
+      "bytes": 1322,
+      "sha256": "5f94060a06f950edcc0545e2fdfdafa1b3a3ebfa89880b419d7e8e295748baa8"
+    },
+    {
+      "path": "editable-sources/logo-on-dark.svg",
+      "bytes": 346,
+      "sha256": "08ef3a649c253c5b529676c2f00432f438ed748fa6dfbf6e9a32e2ceba4b9b99"
+    },
+    {
+      "path": "editable-sources/logo-on-light.svg",
+      "bytes": 275,
+      "sha256": "62050c1f97b562b023a866522a3ae6cf827c46debe9d23b9e969370641733139"
+    },
+    {
+      "path": "editable-sources/packaging-layout.svg",
+      "bytes": 325,
+      "sha256": "4fdc2ce6aec5f565674fa826dd3f6e648ac9dee26bc1da0a2cb4625dc9bda727"
+    },
+    {
+      "path": "editable-sources/pattern-primary.svg",
+      "bytes": 512,
+      "sha256": "5f57ec02f67f5c46363baafc31d4a1cad37c82adb4586f9098c9bb14b6d41739"
+    },
+    {
+      "path": "editable-sources/pattern-secondary.svg",
+      "bytes": 401,
+      "sha256": "cb462c39b5edc81bd206243bd9880081e93b44aba89cf5085f416138d8c6c8c9"
+    },
+    {
+      "path": "editable-sources/social-announcement.svg",
+      "bytes": 917,
+      "sha256": "f35d9e8c83f37e79768d13af0af489d89792d2b337e25a46f084ad71a966c74b"
+    },
+    {
+      "path": "exports/leaf-box-brand-sheet.png",
+      "bytes": 120168,
+      "sha256": "3c92d4f8483cf1ff907ac452f7b54afb53af6f8fca055a05602c0075c5714d2b"
+    },
+    {
+      "path": "exports/leaf-box-digital-mockup.png",
+      "bytes": 101311,
+      "sha256": "a7fcd48067ee73d1abfe5d41abdd9a2fffa441a2729e7849f4a9d242cbacdda0"
+    },
+    {
+      "path": "exports/leaf-box-logo-transparent.png",
+      "bytes": 56478,
+      "sha256": "b3fe33d894bf30728f0a2c49847bb4b0bb8327d0a27509ddbb7514bc604c5273"
+    },
+    {
+      "path": "exports/leaf-box-packaging-mockup.png",
+      "bytes": 2000928,
+      "sha256": "495cc2369d8f96dadc9af6550f6f6734a9ee7dc9ec47769a36875f23935542c4"
+    },
+    {
+      "path": "exports/leaf-box-social-kit.png",
+      "bytes": 86433,
+      "sha256": "1a2af7d5b1249e2ef4ea543a1de30e8c376b82da0e94c858c5e9cb9a67077350"
+    },
+    {
+      "path": "leaf-box-brand-presentation.pdf",
+      "bytes": 3642380,
+      "sha256": "c7e18ca8153400da8d64d410be19a3573b32460587cbe6616844172bbaaa30d7"
+    }
+  ]
+}

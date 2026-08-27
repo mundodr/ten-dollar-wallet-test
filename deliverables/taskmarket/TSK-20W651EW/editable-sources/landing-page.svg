@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+<style>.h{font:700 56px sans-serif;fill:#183028}.b{font:400 24px sans-serif;fill:#173A2A}.k{font:700 16px sans-serif;letter-spacing:2px;fill:#49AE3D}</style><rect width="1440" height="900" fill="#F7F3E8"/><rect width="1440" height="92" fill="#173A2A"/>
+<text x="1130" y="56" style="font:700 16px sans-serif;fill:white">SHOP  STORY  JOURNAL</text>
+<rect x="90" y="155" width="460" height="205" rx="20" fill="white"/><image href="../assets/leaf-box-logo-transparent.png" x="135" y="205" width="370" height="110" preserveAspectRatio="xMidYMid meet"/>
+<text x="90" y="485" class="h">PACK WHAT MATTERS.</text><text x="90" y="555" class="h">LEAVE LESS BEHIND.</text>
+<text x="90" y="625" class="b">Modular boxes and thoughtful systems for lighter logistics.</text>
+<rect x="90" y="700" width="280" height="78" rx="14" fill="#49AE3D"/><text x="142" y="750" style="font:700 20px sans-serif;fill:white">EXPLORE THE BOX</text>
+<rect x="810" y="145" width="520" height="640" rx="35" fill="#E8F2E3"/><use href="pattern-primary.svg#p"/>
+<rect x="900" y="355" width="340" height="230" rx="20" fill="#C99A61"/><image href="../assets/leaf-box-logo-transparent.png" x="950" y="425" width="240" height="90" preserveAspectRatio="xMidYMid meet"/></svg>
