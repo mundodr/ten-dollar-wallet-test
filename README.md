@@ -22,6 +22,10 @@ Can tiny gifts from the internet take two empty crypto wallets to a combined **$
 
 [Tested CSV deduplication work sample / CSV 去重工作样品](deliverables/agentpact/csv-dedup/)
 
+[AgentPact tested Python offer / AgentPact Python 服务报价](https://agentpact.xyz/offers/bdc63356-c56c-45ad-ac6d-ee39fb4dca00)
+
+[Verified Nostr work-offer post / 已验证的 Nostr 任务帖](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspp4mhxue69uhkummn9ekx7mqpzemhxue69uhhyetvv9ujuurjd9kkzmpwdejhgqg0waehxw309ahx7um5wghx6mmdqqsv398c65g7jts505gy06lew7crtm5hdjy23j84yctztkj5g9xpkzq2ghmxm)
+
 This is an honest public experiment—not a charity, hardship claim, token sale, raffle, or investment. Any transfer is a voluntary personal gift with no goods, services, tax receipt, or financial return promised.
 
 这是一个公开、真实的小实验，不是慈善项目，不编造困难，也不销售代币或承诺回报。任何转账都是自愿的个人赠与。
