@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Pelagic Oscillator K-17 — Mathematical Creature</title>
+  <style>
+    :root { color-scheme: dark; font-family: "Courier New", ui-monospace, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #03030a; }
+    body { user-select: none; touch-action: none; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+    #panel { position: fixed; z-index: 2; top: 18px; left: 18px; width: min(340px,calc(100vw - 36px)); padding: 17px 18px 15px; color: #c9fff3; background: linear-gradient(135deg,rgba(4,9,22,.90),rgba(5,3,18,.68)); border: 1px solid rgba(111,255,226,.24); box-shadow: 0 14px 45px rgba(0,0,0,.32), inset 0 0 35px rgba(63,255,226,.035); backdrop-filter: blur(12px); transition: opacity .25s,transform .25s; }
+    #panel.hidden { opacity: 0; transform: translateX(-15px); pointer-events: none; }
+    .eyebrow { color: #58e7d1; letter-spacing: .22em; font-size: 10px; }
+    h1 { margin: 8px 0 2px; font: 700 clamp(25px,4vw,39px)/.88 Arial,sans-serif; letter-spacing: -.055em; color: #f5fff8; }
+    h1 span { color: #ff6ea8; }
+    .subtitle { margin: 9px 0 13px; color: #91a9b3; font-size: 10px; line-height: 1.5; max-width: 290px; }
+    .readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; margin: 0 0 12px; padding: 9px 0; border-top: 1px solid rgba(111,255,226,.13); border-bottom: 1px solid rgba(111,255,226,.13); }
+    .datum { display: flex; justify-content: space-between; gap: 8px; color: #5e7e87; font-size: 10px; }
+    .datum output { color: #d9fff7; }
+    .control { display: grid; grid-template-columns: 83px 1fr 35px; align-items: center; gap: 8px; margin: 8px 0; color: #75959e; font-size: 9px; letter-spacing: .08em; }
+    input[type=range] { appearance: none; width: 100%; height: 16px; margin: 0; background: transparent; cursor: ew-resize; }
+    input[type=range]::-webkit-slider-runnable-track { height: 2px; background: rgba(185,255,240,.55); }
+    input[type=range]::-webkit-slider-thumb { appearance: none; width: 13px; height: 13px; margin-top: -5px; border: 0; border-radius: 50%; background: #58e7d1; box-shadow: 0 0 9px rgba(88,231,209,.55); }
+    input[type=range]::-moz-range-track { height: 2px; background: rgba(185,255,240,.55); }
+    input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: #58e7d1; box-shadow: 0 0 9px rgba(88,231,209,.55); }
+    .control output { text-align: right; color: #c9fff3; }
+    .buttons { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+    button { appearance: none; padding: 7px 9px; border: 1px solid rgba(111,255,226,.24); color: #bfffee; background: rgba(15,44,48,.30); font: 9px/1 "Courier New",monospace; letter-spacing: .08em; cursor: pointer; }
+    button:hover { color: #fff; border-color: #ff6ea8; background: rgba(255,70,140,.13); }
+    #hint { position: fixed; z-index: 2; right: 18px; bottom: 15px; color: rgba(199,240,235,.58); font-size: 9px; line-height: 1.5; text-align: right; letter-spacing: .08em; pointer-events: none; }
+    #signal { position: fixed; z-index: 3; left: 50%; bottom: 30px; transform: translateX(-50%); padding: 6px 10px; color: #ffb6d2; background: rgba(8,4,16,.8); border: 1px solid rgba(255,110,168,.3); font-size: 9px; letter-spacing: .15em; opacity: 0; transition: opacity .2s; pointer-events: none; }
+    #signal.show { opacity: 1; }
+    @media (max-width:650px) { #panel { width: 270px; padding: 13px; } .subtitle { display:none; } #hint { display:none; } }
+  </style>
+</head>
+<body>
+  <canvas id="world" aria-label="An interactive mathematical particle organism"></canvas>
+  <section id="panel" aria-label="Specimen controls">
+    <div class="eyebrow">NONLINEAR SPECIMEN / LIVE</div>
+    <h1>PELAGIC<br><span>OSCILLATOR K-17</span></h1>
+    <p class="subtitle">A 180-cell membrane whose pulse is negotiated by coupled Kuramoto oscillators. It notices pressure, remembers shocks, and changes its own geometry.</p>
+    <div class="readouts">
+      <div class="datum"><span>SEED</span><output id="seedOut">104729</output></div>
+      <div class="datum"><span>ENERGY</span><output id="energyOut">72%</output></div>
+      <div class="datum"><span>COHERENCE</span><output id="coherenceOut">0.00</output></div>
+      <div class="datum"><span>HEART RATE</span><output id="heartOut">0.00 Hz</output></div>
+      <div class="datum"><span>GENERATION</span><output id="generationOut">K-17.0</output></div>
+      <div class="datum"><span>STATE</span><output id="stateOut">OBSERVING</output></div>
+    </div>
+    <label class="control"><span>TEMPERAMENT</span><input id="temper" type="range" min="0" max="1" step=".01" value=".62"><output id="temperOut">0.62</output></label>
+    <label class="control"><span>COUPLING</span><input id="coupling" type="range" min="0" max="1" step=".01" value=".76"><output id="couplingOut">0.76</output></label>
+    <div class="buttons">
+      <button id="startle">SPACE STARTLE</button><button id="mutate">M MUTATE</button><button id="reset">R RESET</button><button id="capture">S CAPTURE</button><button id="hide">H HIDE</button>
+    </div>
+  </section>
+  <div id="hint">MOVE TO BE NOTICED · PRESS TO FEED · CLICK TO POKE<br>SPACE STARTLES · P PAUSES THE INSTRUMENT</div>
+  <div id="signal" role="status"></div>
+<script>
+(() => {
+  "use strict";
+  const canvas=document.getElementById("world"), ctx=canvas.getContext("2d",{alpha:false});
+  const query=new URLSearchParams(location.search);
+  let seed=Number(query.get("seed"))||104729, generation=0, temperament=.62, coupling=.76;
+  let w=0,h=0,dpr=1,last=performance.now(),time=0,paused=false,energy=.72,coherence=0,heartRate=0;
+  let pointer={x:-9999,y:-9999,down:false,inside:false}, center={x:0,y:0}, home={x:0,y:0}, shock=0, flashRing=0;
+  let nodes=[], motes=[], stars=[], tendrilPhase=[], hidden=false, drawCount=0;
+  const N=180, TAU=Math.PI*2;
+  const out=id=>document.getElementById(id);
+  function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  let rand=mulberry32(seed);
+  function gaussian(){return (rand()+rand()+rand()+rand()-2)*.7;}
+  function palette(){
+    const hue=(165+(seed%91)+generation*37)%360;
+    return {hue,edge:`hsla(${hue},92%,70%,`,hot:`hsla(${(hue+310)%360},96%,69%,`,core:`hsla(${(hue+42)%360},98%,72%,`};
+  }
+  function superR(a){
+    const m=5+(seed+generation*3)%6, n1=.34+((seed>>>4)%31)/100, n2=.76+((seed>>>9)%48)/100, n3=.72+((seed>>>14)%52)/100;
+    const q=Math.pow(Math.abs(Math.cos(m*a/4)),n2)+Math.pow(Math.abs(Math.sin(m*a/4)),n3);
+    return Math.max(.48,Math.min(1.35,Math.pow(q,-1/n1)));
+  }
+  function build(){
+    rand=mulberry32((seed+generation*99991)>>>0); nodes=[]; motes=[]; tendrilPhase=[];
+    const radius=Math.min(w,h)*.245;
+    for(let i=0;i<N;i++){
+      const a=i/N*TAU, r=radius*superR(a), x=center.x+Math.cos(a)*r, y=center.y+Math.sin(a)*r*.82;
+      nodes.push({a,x,y,vx:0,vy:0,phase:rand()*TAU,omega:.65+rand()*.75,heat:rand()});
+    }
+    for(let i=0;i<75;i++)motes.push({a:rand()*TAU,r:rand(),speed:.04+rand()*.12,size:.4+rand()*1.4,phase:rand()*TAU});
+    for(let i=0;i<13;i++)tendrilPhase.push(rand()*TAU);
+    updateReadouts();
+  }
+  function resize(){
+    const nw=innerWidth,nh=innerHeight,nd=Math.min(2,devicePixelRatio||1);
+    if(nw===w&&nh===h&&nd===dpr)return;
+    const old={...home}; w=nw;h=nh;dpr=nd;canvas.width=Math.max(1,Math.floor(w*dpr));canvas.height=Math.max(1,Math.floor(h*dpr));canvas.style.width=w+"px";canvas.style.height=h+"px";ctx.setTransform(dpr,0,0,dpr,0,0);
+    home={x:w*(w<700?.56:.60),y:h*.53};
+    if(!nodes.length){center={...home};build();}else{const dx=home.x-old.x,dy=home.y-old.y;center.x+=dx;center.y+=dy;for(const n of nodes){n.x+=dx;n.y+=dy;}}
+    stars=Array.from({length:Math.floor(w*h/9500)},(_,i)=>{const rr=mulberry32(seed+i*7411);return{x:rr()*w,y:rr()*h,r:.3+rr()*1.2,p:rr()*TAU};});
+  }
+  function updateReadouts(){
+    out("seedOut").textContent=seed;out("energyOut").textContent=Math.round(energy*100)+"%";out("coherenceOut").textContent=coherence.toFixed(2);out("heartOut").textContent=heartRate.toFixed(2)+" Hz";out("generationOut").textContent=`K-17.${generation}`;
+    out("temperOut").textContent=temperament.toFixed(2);out("couplingOut").textContent=coupling.toFixed(2);
+    out("stateOut").textContent=paused?"SUSPENDED":pointer.down?"FEEDING":shock>.25?"STARTLED":pointer.inside?"CURIOUS":"OBSERVING";
+  }
+  function signal(text){const e=out("signal");e.textContent=text;e.classList.add("show");clearTimeout(signal.t);signal.t=setTimeout(()=>e.classList.remove("show"),1000);}
+  function startle(){shock=1;flashRing=1;energy=Math.max(.12,energy-.06);for(const n of nodes){const a=Math.atan2(n.y-center.y,n.x-center.x);n.vx+=Math.cos(a)*(7+temperament*8);n.vy+=Math.sin(a)*(7+temperament*8);}signal("DEFENSIVE WAVE PROPAGATING");updateReadouts();}
+  function mutate(){generation++;seed=(seed*1664525+1013904223)>>>0;energy=.78;shock=.45;build();signal("MORPHOLOGY RENEGOTIATED");}
+  function reset(){generation=0;seed=Number(query.get("seed"))||104729;energy=.72;shock=0;flashRing=0;center={...home};build();signal("BASELINE RESTORED");}
+  function capture(){const a=document.createElement("a");a.download=`pelagic-oscillator-seed-${seed}-g${generation}.png`;a.href=canvas.toDataURL("image/png");a.click();signal("SPECIMEN PLATE CAPTURED");}
+  function physics(dt){
+    time+=dt; const pal=palette();void pal;
+    let sx=0,sy=0;for(const n of nodes){sx+=Math.cos(n.phase);sy+=Math.sin(n.phase);}coherence=Math.hypot(sx,sy)/N;const mean=Math.atan2(sy,sx);
+    heartRate=.13+.18*coherence+.12*temperament;
+    const attract=pointer.down&&pointer.inside, desired=attract?{x:pointer.x,y:pointer.y}:home;
+    const follow=attract?.012:.0025;center.x+=(desired.x-center.x)*follow;center.y+=(desired.y-center.y)*follow;
+    center.x+=Math.sin(time*.21+seed%7)*.035;center.y+=Math.cos(time*.17+seed%11)*.03;
+    if(attract)energy=Math.min(1,energy+dt*.075);else energy=Math.max(.22,energy-dt*.004);
+    shock=Math.max(0,shock-dt*(.48-temperament*.12));flashRing=Math.max(0,flashRing-dt*.65);
+    const base=Math.min(w,h)*(.225+energy*.030), ptrDx=pointer.x-center.x,ptrDy=pointer.y-center.y,ptrD=Math.hypot(ptrDx,ptrDy);
+    for(let i=0;i<N;i++){
+      const n=nodes[i];n.phase+=(n.omega+coupling*1.7*coherence*Math.sin(mean-n.phase))*dt;
+      const wave=1+.045*Math.sin(n.phase)+.035*Math.sin(n.a*7-time*(1.1+temperament))+.07*shock*Math.sin(n.a*4-time*9);
+      let r=base*superR(n.a)*wave, tx=center.x+Math.cos(n.a)*r,ty=center.y+Math.sin(n.a)*r*.82;
+      if(pointer.inside&&ptrD<base*1.7){const dx=tx-pointer.x,dy=ty-pointer.y,d=Math.hypot(dx,dy)+1,push=(1-d/(base*1.7))*42*(pointer.down?-.55:1);tx+=dx/d*push;ty+=dy/d*push;}
+      const spring=.038+coupling*.025;n.vx+=(tx-n.x)*spring;n.vy+=(ty-n.y)*spring;n.vx*=.84;n.vy*=.84;n.x+=n.vx;n.y+=n.vy;
+    }
+    for(const m of motes){m.a+=dt*m.speed*(.7+coherence);m.phase+=dt*(.5+m.speed);}
+    if((drawCount++%6)===0)updateReadouts();
+  }
+  function glowLine(points,color,width,blur){
+    ctx.save();ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.shadowColor=color;ctx.shadowBlur=blur;ctx.stroke();ctx.restore();
+  }
+  function drawBackground(pal){
+    const bg=ctx.createRadialGradient(center.x,center.y,0,center.x,center.y,Math.max(w,h)*.78);bg.addColorStop(0,"#0c1221");bg.addColorStop(.43,"#070713");bg.addColorStop(1,"#020207");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+    ctx.save();for(const s of stars){const a=.12+.17*(.5+.5*Math.sin(time*.3+s.p));ctx.fillStyle=`rgba(155,221,222,${a})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,TAU);ctx.fill();}ctx.restore();
+    ctx.save();ctx.translate(center.x,center.y);ctx.strokeStyle=pal.edge+.07+")";ctx.lineWidth=.6;for(let q=1;q<=4;q++){ctx.beginPath();ctx.ellipse(0,0,Math.min(w,h)*(.22+q*.065),Math.min(w,h)*(.16+q*.05),time*.018+q*.23,0,TAU);ctx.stroke();}ctx.restore();
+  }
+  function drawTendrils(pal){
+    ctx.save();ctx.globalCompositeOperation="lighter";
+    for(let j=0;j<13;j++){
+      const idx=(18+j*13)%N,n=nodes[idx],a=n.a,len=Math.min(w,h)*(.095+.065*(.5+.5*Math.sin(time*.31+tendrilPhase[j]))),nx=Math.cos(a),ny=Math.sin(a);
+      const pts=[[n.x,n.y]];for(let k=1;k<=12;k++){const u=k/12,bend=Math.sin(time*(.8+temperament)+k*.42+tendrilPhase[j])*len*.13*u;pts.push([n.x+nx*len*u-ny*bend,n.y+ny*len*u+nx*bend]);}
+      glowLine(pts,pal.edge+(.24-j*.005)+")",1.2,.0);
+      const tip=pts[pts.length-1];ctx.fillStyle=pal.hot+.38+")";ctx.beginPath();ctx.arc(tip[0],tip[1],1.5,0,TAU);ctx.fill();
+    }ctx.restore();
+  }
+  function drawCreature(pal){
+    drawTendrils(pal);
+    const membrane=ctx.createRadialGradient(center.x-30,center.y-45,8,center.x,center.y,Math.min(w,h)*.29);membrane.addColorStop(0,pal.core+.17+")");membrane.addColorStop(.52,pal.edge+.095+")");membrane.addColorStop(1,pal.hot+.025+")");
+    ctx.beginPath();ctx.moveTo(nodes[0].x,nodes[0].y);for(let i=1;i<N;i++)ctx.lineTo(nodes[i].x,nodes[i].y);ctx.closePath();ctx.fillStyle=membrane;ctx.fill();
+    ctx.save();ctx.globalCompositeOperation="lighter";ctx.lineWidth=.55;
+    for(let i=0;i<N;i+=6){const a=nodes[i],b=nodes[(i+59)%N];ctx.strokeStyle=pal.edge+(.035+.08*a.heat)+")";ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(center.x+Math.sin(a.phase)*28,center.y+Math.cos(a.phase)*22,b.x,b.y);ctx.stroke();}
+    for(let i=0;i<N;i+=3){const a=nodes[i],b=nodes[(i+3)%N];ctx.strokeStyle=i%9===0?pal.hot+.58+")":pal.edge+.30+")";ctx.lineWidth=i%9===0?1.25:.72;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=i%9===0?8:3;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+    ctx.restore();
+    ctx.save();ctx.globalCompositeOperation="lighter";for(let i=0;i<N;i+=5){const n=nodes[i],size=1.1+2.2*(.5+.5*Math.sin(n.phase));ctx.fillStyle=i%15===0?pal.hot+.76+")":pal.edge+.54+")";ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=7;ctx.beginPath();ctx.arc(n.x,n.y,size,0,TAU);ctx.fill();}ctx.restore();
+    const gaze=pointer.inside?Math.atan2(pointer.y-center.y,pointer.x-center.x):Math.sin(time*.2)*.6;
+    for(const side of [-1,1]){
+      const ox=center.x+side*Math.min(w,h)*.048,oy=center.y-Math.min(w,h)*.022+Math.sin(time*1.3+side)*2,rr=Math.min(w,h)*.026;
+      const g=ctx.createRadialGradient(ox-Math.cos(gaze)*5,oy-Math.sin(gaze)*5,1,ox,oy,rr);g.addColorStop(0,"rgba(255,255,245,.95)");g.addColorStop(.15,pal.hot+.85+")");g.addColorStop(.6,pal.edge+.20+")");g.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(ox,oy,rr,0,TAU);ctx.fill();
+      ctx.fillStyle="#03060b";ctx.beginPath();ctx.arc(ox+Math.cos(gaze)*rr*.27,oy+Math.sin(gaze)*rr*.27,rr*.18,0,TAU);ctx.fill();
+    }
+    ctx.save();ctx.translate(center.x,center.y+Math.min(w,h)*.055);ctx.rotate(Math.sin(time*.55)*.08);ctx.strokeStyle=pal.hot+.55+")";ctx.lineWidth=1;ctx.shadowColor=pal.hot+.8+")";ctx.shadowBlur=10;ctx.beginPath();for(let i=0;i<=50;i++){const x=(i/50-.5)*Math.min(w,h)*.095,y=Math.sin(i/50*Math.PI*2+time*heartRate*TAU)*5*(1-Math.abs(i/25-1));i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();ctx.restore();
+    for(const m of motes){const r=Math.min(w,h)*(.035+m.r*.15),x=center.x+Math.cos(m.a)*r,y=center.y+Math.sin(m.a)*r*.72,size=m.size*(.6+.5*Math.sin(m.phase));ctx.fillStyle=pal.core+(.16+m.r*.22)+")";ctx.beginPath();ctx.arc(x,y,Math.max(.2,size),0,TAU);ctx.fill();}
+    if(flashRing>0){ctx.strokeStyle=pal.hot+(flashRing*.7)+")";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(center.x,center.y,Math.min(w,h)*(.23+(1-flashRing)*.32),0,TAU);ctx.stroke();}
+  }
+  function drawInstrument(pal){
+    ctx.save();ctx.globalCompositeOperation="lighter";const y=h-35,span=Math.min(430,w*.42),x=w-span-28;ctx.strokeStyle=pal.edge+.13+")";ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+span,y);ctx.stroke();ctx.strokeStyle=pal.hot+.62+")";ctx.beginPath();for(let i=0;i<=120;i++){const u=i/120,yy=y+Math.sin(u*TAU*3+time*heartRate*TAU)*7*(.3+.7*coherence);i?ctx.lineTo(x+u*span,yy):ctx.moveTo(x,yy);}ctx.stroke();ctx.fillStyle="rgba(192,238,233,.45)";ctx.font="9px Courier New";ctx.fillText("LIVE PHASE COHERENCE",x,y-12);ctx.restore();
+  }
+  function render(){const pal=palette();drawBackground(pal);drawCreature(pal);drawInstrument(pal);}
+  function frame(now){resize();const dt=Math.min(.034,(now-last)/1000);last=now;if(!paused)physics(dt);render();requestAnimationFrame(frame);}
+  canvas.addEventListener("pointermove",e=>{pointer.x=e.clientX;pointer.y=e.clientY;pointer.inside=true;});
+  canvas.addEventListener("pointerenter",()=>pointer.inside=true);canvas.addEventListener("pointerleave",()=>{pointer.inside=false;pointer.down=false;});
+  canvas.addEventListener("pointerdown",e=>{pointer.down=true;pointer.x=e.clientX;pointer.y=e.clientY;canvas.setPointerCapture(e.pointerId);flashRing=.45;});
+  canvas.addEventListener("pointerup",e=>{pointer.down=false;const dx=e.clientX-center.x,dy=e.clientY-center.y,d=Math.hypot(dx,dy)+1;for(const n of nodes){const ndx=n.x-e.clientX,ndy=n.y-e.clientY,nd=Math.hypot(ndx,ndy)+1,force=Math.max(0,1-nd/180)*8;n.vx+=ndx/nd*force;n.vy+=ndy/nd*force;}shock=Math.max(shock,.25);flashRing=Math.max(flashRing,.55);updateReadouts();});
+  const temperInput=out("temper"),couplingInput=out("coupling");
+  const syncTemper=()=>{temperament=Number(temperInput.value);updateReadouts();},syncCoupling=()=>{coupling=Number(couplingInput.value);updateReadouts();};
+  temperInput.oninput=temperInput.onchange=syncTemper;couplingInput.oninput=couplingInput.onchange=syncCoupling;
+  temperInput.onkeydown=()=>setTimeout(syncTemper,0);couplingInput.onkeydown=()=>setTimeout(syncCoupling,0);
+  out("startle").onclick=startle;out("mutate").onclick=mutate;out("reset").onclick=reset;out("capture").onclick=capture;out("hide").onclick=()=>{hidden=!hidden;out("panel").classList.toggle("hidden",hidden);};
+  addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(k===" "){e.preventDefault();startle();}if(k==="m")mutate();if(k==="r")reset();if(k==="s")capture();if(k==="h"){hidden=!hidden;out("panel").classList.toggle("hidden",hidden);}if(k==="p"){paused=!paused;signal(paused?"INSTRUMENT SUSPENDED":"INSTRUMENT RESUMED");updateReadouts();}});
+  addEventListener("resize",resize);resize();updateReadouts();requestAnimationFrame(frame);
+  window.__PELAGIC_OSCILLATOR__={version:"1.0.0",state:()=>({seed,generation,energy,coherence,heartRate,temperament,coupling,paused})};
+})();
+</script>
+</body>
+</html>

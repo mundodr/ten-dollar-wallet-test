@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Lattice Orchard — Infinite Garden</title>
+  <style>
+    :root { color-scheme: dark; font-family: "Courier New", ui-monospace, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #020806; }
+    body { touch-action: none; user-select: none; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+    #veil { position: fixed; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.07) 0 1px, transparent 1px 4px); mix-blend-mode: soft-light; }
+    #hud { position: fixed; left: max(18px, env(safe-area-inset-left)); top: max(18px, env(safe-area-inset-top)); width: min(360px, calc(100vw - 36px)); color: #d9ffe4; text-shadow: 0 0 12px #28ff7f66; transition: opacity .25s; }
+    #hud.hidden { opacity: 0; pointer-events: none; }
+    .eyebrow { color: #79ffa2; font-size: 10px; letter-spacing: .24em; margin-bottom: 7px; }
+    h1 { margin: 0; font-size: clamp(21px, 4vw, 34px); line-height: .92; letter-spacing: -.06em; font-weight: 600; }
+    .subtitle { margin-top: 7px; color: #9bcaa8; font-size: 11px; line-height: 1.45; max-width: 310px; }
+    #readout { display: grid; grid-template-columns: auto 1fr; gap: 2px 13px; margin-top: 13px; font-size: 10px; color: #86a991; }
+    #readout b { color: #d9ffe4; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .controls { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; pointer-events: auto; }
+    button { appearance: none; border: 1px solid #5b8f6a88; background: #05120dcc; color: #caffd8; padding: 7px 9px; font: 10px/1 "Courier New", monospace; letter-spacing: .08em; cursor: pointer; box-shadow: inset 0 0 12px #39ff7a0d; }
+    button:hover, button:focus-visible { border-color: #9dffb9; background: #0b2117e6; outline: none; }
+    #hint { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(17px, env(safe-area-inset-bottom)); color: #8cb49a; font-size: 10px; text-align: right; text-shadow: 0 0 8px #000; pointer-events: none; }
+    #message { position: fixed; left: 50%; bottom: 42px; transform: translateX(-50%); color: #d8ffe3; font-size: 10px; letter-spacing: .1em; opacity: 0; transition: opacity .25s; pointer-events: none; }
+    #message.show { opacity: 1; }
+    @media (max-width: 620px) { #hint { display: none; } .subtitle { max-width: 260px; } }
+  </style>
+</head>
+<body>
+  <canvas id="garden" aria-label="An explorable, animated mathematical garden"></canvas>
+  <div id="veil"></div>
+  <section id="hud" aria-label="Garden controls">
+    <div class="eyebrow">SPECIMEN MAP / LIVE CULTURE</div>
+    <h1>LATTICE<br>ORCHARD</h1>
+    <div class="subtitle">A scale-less ecology grown from warped Voronoi cells, phyllotactic petals, and luminous mycelium. No image assets. No map edge.</div>
+    <div id="readout">
+      <span>SEED</span><b id="seedOut">731941</b>
+      <span>STRAIN</span><b id="strainOut">MOSS GLASS</b>
+      <span>ZOOM</span><b id="zoomOut">1.00×</b>
+      <span>GRAFTS</span><b id="graftOut">0 / 12</b>
+      <span>COORD</span><b id="coordOut">0.000, 0.000</b>
+    </div>
+    <div class="controls">
+      <button id="mutate" type="button">M MUTATE</button>
+      <button id="home" type="button">R HOME</button>
+      <button id="capture" type="button">S CAPTURE</button>
+      <button id="hide" type="button">H HIDE UI</button>
+    </div>
+  </section>
+  <div id="hint">DRAG TO WANDER · WHEEL TO DESCEND · CLICK TO GRAFT<br>DOUBLE-CLICK TO DIVE INTO A BLOOM</div>
+  <div id="message" role="status"></div>
+  <script>
+  (() => {
+    "use strict";
+    const canvas = document.getElementById("garden");
+    const gl = canvas.getContext("webgl2", { antialias: false, preserveDrawingBuffer: true });
+    if (!gl) {
+      document.body.innerHTML = '<p style="color:#d9ffe4;padding:2rem">Lattice Orchard requires WebGL 2.</p>';
+      return;
+    }
+
+    const vertex = `#version 300 es
+      in vec2 a_position;
+      void main(){ gl_Position=vec4(a_position,0.0,1.0); }
+    `;
+    const fragment = `#version 300 es
+      precision highp float;
+      out vec4 outColor;
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform vec2 u_center;
+      uniform float u_zoom;
+      uniform float u_seed;
+      uniform float u_strain;
+      uniform vec2 u_pointer;
+      uniform vec3 u_grafts[12];
+      uniform int u_graftCount;
+
+      float hash21(vec2 p){
+        p=fract(p*vec2(123.34,345.45));
+        p+=dot(p,p+34.345+u_seed*.00001);
+        return fract(p.x*p.y);
+      }
+      vec2 hash22(vec2 p){
+        float n=hash21(p);
+        return fract(vec2(n,n*34.57+19.19));
+      }
+      float noise(vec2 p){
+        vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+        return mix(mix(hash21(i),hash21(i+vec2(1,0)),f.x),mix(hash21(i+vec2(0,1)),hash21(i+1.0),f.x),f.y);
+      }
+      float fbm(vec2 p){
+        float a=.5, v=0.0;
+        mat2 m=mat2(1.61,1.21,-1.21,1.61);
+        for(int i=0;i<5;i++){ v+=a*noise(p); p=m*p+.17; a*=.48; }
+        return v;
+      }
+      vec3 pal(float t){
+        vec3 a,b,c,d;
+        if(u_strain<.5){ a=vec3(.08,.20,.13); b=vec3(.28,.46,.30); c=vec3(.75,.95,.62); d=vec3(.05,.18,.48); }
+        else if(u_strain<1.5){ a=vec3(.16,.09,.20); b=vec3(.44,.30,.52); c=vec3(.80,.72,.95); d=vec3(.54,.08,.12); }
+        else if(u_strain<2.5){ a=vec3(.05,.16,.18); b=vec3(.24,.46,.49); c=vec3(.62,.88,.98); d=vec3(.12,.35,.40); }
+        else { a=vec3(.17,.12,.05); b=vec3(.51,.34,.17); c=vec3(.95,.78,.44); d=vec3(.03,.22,.38); }
+        return a+b*cos(6.28318*(c*t+d));
+      }
+      vec4 flora(vec2 p,float scale,float clock){
+        vec2 x=p*scale, cell=floor(x), f=fract(x)-.5;
+        float bloom=0.0, vein=0.0, pollen=0.0, identity=0.0;
+        for(int yy=-1;yy<=1;yy++) for(int xx=-1;xx<=1;xx++){
+          vec2 o=vec2(float(xx),float(yy));
+          vec2 id=cell+o;
+          vec2 h=hash22(id);
+          vec2 r=f-o-(h-.5)*.72;
+          float rad=length(r);
+          float ang=atan(r.y,r.x);
+          float petals=3.0+floor(hash21(id+17.0)*7.0);
+          float pulse=.5+.5*sin(clock*(.18+.12*h.x)+h.y*12.0);
+          float rim=.19+.08*sin(ang*petals+h.x*9.0+u_strain*.7)*(0.45+.55*pulse);
+          float flower=exp(-34.0*abs(rad-rim))*smoothstep(.46,.03,rad);
+          float heart=exp(-90.0*rad*rad)*(1.0+.55*sin(ang*petals-clock*.2));
+          float stem=exp(-85.0*abs(r.x+.12*sin(r.y*7.0+h.x*9.0)))*smoothstep(.6,-.35,r.y)*smoothstep(.52,.05,rad);
+          float v=exp(-175.0*abs(sin(ang*petals)*rad))*smoothstep(.31,.04,rad);
+          float score=flower+heart*.8+stem*.22;
+          if(score>bloom){ identity=hash21(id+93.0); bloom=score; }
+          vein=max(vein,v*(flower+heart));
+          pollen=max(pollen,exp(-900.0*dot(r,r))*(.65+.35*sin(clock+h.x*30.0)));
+        }
+        return vec4(bloom,vein,pollen,identity);
+      }
+      void main(){
+        vec2 fc=gl_FragCoord.xy;
+        vec2 uv=(fc-.5*u_resolution)/min(u_resolution.x,u_resolution.y);
+        vec2 p=u_center+uv*2.25/u_zoom;
+        float clock=u_time;
+        vec2 warp=vec2(fbm(p*.73+vec2(clock*.007,1.7)),fbm(p*.73+vec2(8.3,-clock*.006)))-.5;
+        vec2 q=p+warp*(.46+.07*u_strain);
+        float soil=fbm(q*3.2+fbm(q*1.3)*2.1);
+        float contour=pow(1.0-abs(fract(soil*8.0)-.5)*2.0,14.0);
+        vec4 nearF=flora(q,2.15,clock);
+        vec4 midF=flora(q+vec2(3.1,-5.7),5.4,clock*1.13);
+        vec4 farF=flora(q+vec2(-7.4,2.6),12.8,clock*.87);
+        float lod=clamp(log2(u_zoom+1.0)*.24,0.0,1.0);
+        float life=nearF.x*.88+midF.x*(.44+.2*lod)+farF.x*(.12+.22*lod);
+        float veins=nearF.y*.6+midF.y*.34+farF.y*.16;
+        float pollen=nearF.z+midF.z*.7+farF.z*.35;
+        float identity=nearF.w*.65+midF.w*.25+farF.w*.1;
+        float pointerGlow=exp(-8.0*dot(p-u_pointer,p-u_pointer)*u_zoom);
+        life+=pointerGlow*(.07+.05*sin(clock*2.0));
+        float graftGlow=0.0;
+        for(int i=0;i<12;i++){
+          if(i>=u_graftCount) break;
+          vec2 d=p-u_grafts[i].xy;
+          float r=length(d), a=atan(d.y,d.x);
+          float ring=exp(-95.0*abs(r-(.14+.035*sin(a*(5.0+mod(u_grafts[i].z,5.0))+clock*.25))));
+          graftGlow=max(graftGlow,ring*smoothstep(.44,.03,r));
+        }
+        vec3 col=pal(identity+soil*.19+u_strain*.13);
+        col*=.12+.92*life;
+        col+=pal(identity+.24)*veins*.52;
+        col+=vec3(.65,1.0,.73)*pollen*1.4;
+        col+=pal(.71+u_strain*.17)*graftGlow*1.25;
+        col+=vec3(.03,.12,.07)*contour*(.22+.4*soil);
+        float vignette=1.0-smoothstep(.35,.92,length(uv));
+        col*=.58+.42*vignette;
+        col=1.0-exp(-col*1.35);
+        float grain=hash21(fc+floor(clock*12.0))-.5;
+        col+=grain*.025;
+        outColor=vec4(pow(max(col,0.0),vec3(.82)),1.0);
+      }
+    `;
+
+    function shader(type, source) {
+      const sh = gl.createShader(type); gl.shaderSource(sh, source); gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+      return sh;
+    }
+    const program = gl.createProgram();
+    gl.attachShader(program, shader(gl.VERTEX_SHADER, vertex));
+    gl.attachShader(program, shader(gl.FRAGMENT_SHADER, fragment));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+    gl.useProgram(program);
+    const vertices = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
+    const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    const position = gl.getAttribLocation(program, "a_position"); gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+    const U = Object.fromEntries(["resolution","time","center","zoom","seed","strain","pointer","grafts","graftCount"].map(k => [k, gl.getUniformLocation(program, "u_"+k)]));
+
+    const query = new URLSearchParams(location.search);
+    let seed = Number(query.get("seed")) || 731941;
+    let strain = Math.max(0, Math.min(3, Number(query.get("strain")) || 0));
+    let center = [Number(query.get("x")) || 0, Number(query.get("y")) || 0];
+    let zoom = Math.max(.35, Math.min(120, Number(query.get("zoom")) || 1));
+    let pointer = [...center], grafts = [], dragging = false, last = [0,0], down = [0,0], clickTimer = 0, hidden = false;
+    const strainNames = ["MOSS GLASS", "ORCHID STATIC", "TIDAL LICHEN", "AMBER FERN"];
+    const out = id => document.getElementById(id);
+    function readout(){
+      out("seedOut").textContent=String(seed); out("strainOut").textContent=strainNames[strain];
+      out("zoomOut").textContent=zoom.toFixed(2)+"×"; out("graftOut").textContent=grafts.length+" / 12";
+      out("coordOut").textContent=center.map(n=>n.toFixed(3)).join(", ");
+    }
+    function resize(){
+      const dpr=Math.min(2,devicePixelRatio||1), w=Math.max(1,Math.floor(innerWidth*dpr)), h=Math.max(1,Math.floor(innerHeight*dpr));
+      if(canvas.width!==w||canvas.height!==h){ canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h); }
+    }
+    function world(clientX,clientY){
+      const min=Math.min(innerWidth,innerHeight);
+      return [center[0]+(clientX-innerWidth/2)/min*2.25/zoom, center[1]-(clientY-innerHeight/2)/min*2.25/zoom];
+    }
+    function flash(text){ const m=out("message"); m.textContent=text; m.classList.add("show"); clearTimeout(flash.t); flash.t=setTimeout(()=>m.classList.remove("show"),1100); }
+    function mutate(){ strain=(strain+1)%4; seed=(seed*1664525+1013904223)>>>0; grafts=[]; readout(); flash("NEW STRAIN GERMINATED"); }
+    function home(){ center=[0,0]; zoom=1; grafts=[]; readout(); flash("RETURNED TO ORIGIN"); }
+    function capture(){
+      const a=document.createElement("a"); a.download=`lattice-orchard-seed-${seed}.png`; a.href=canvas.toDataURL("image/png"); a.click(); flash("SPECIMEN CAPTURED");
+    }
+    canvas.addEventListener("pointerdown",e=>{ dragging=true; down=last=[e.clientX,e.clientY]; canvas.setPointerCapture(e.pointerId); });
+    canvas.addEventListener("pointermove",e=>{
+      pointer=world(e.clientX,e.clientY);
+      if(dragging){ const min=Math.min(innerWidth,innerHeight); center[0]-=(e.clientX-last[0])/min*2.25/zoom; center[1]+=(e.clientY-last[1])/min*2.25/zoom; last=[e.clientX,e.clientY]; readout(); }
+    });
+    canvas.addEventListener("pointerup",e=>{ if(Math.hypot(e.clientX-down[0],e.clientY-down[1])<4){ const w=world(e.clientX,e.clientY); clearTimeout(clickTimer); clickTimer=setTimeout(()=>{ grafts.push([w[0],w[1],(seed+grafts.length*7)%11]); if(grafts.length>12) grafts.shift(); readout(); flash("GRAFT ACCEPTED"); },260); } dragging=false; });
+    canvas.addEventListener("wheel",e=>{ e.preventDefault(); const before=world(e.clientX,e.clientY); zoom=Math.max(.35,Math.min(120,zoom*Math.exp(-e.deltaY*.0012))); const after=world(e.clientX,e.clientY); center[0]+=before[0]-after[0]; center[1]+=before[1]-after[1]; readout(); },{passive:false});
+    canvas.addEventListener("dblclick",e=>{ clearTimeout(clickTimer); const w=world(e.clientX,e.clientY); center=w; zoom=Math.min(120,zoom*2.4); readout(); flash("DESCENDING ONE SCALE"); });
+    out("mutate").onclick=mutate; out("home").onclick=home; out("capture").onclick=capture;
+    out("hide").onclick=()=>{ hidden=!hidden; out("hud").classList.toggle("hidden",hidden); };
+    addEventListener("keydown",e=>{ if(e.key.toLowerCase()==="m")mutate(); if(e.key.toLowerCase()==="r")home(); if(e.key.toLowerCase()==="s")capture(); if(e.key.toLowerCase()==="h"){hidden=!hidden;out("hud").classList.toggle("hidden",hidden);} });
+    addEventListener("resize",resize); readout(); resize();
+    const start=performance.now();
+    function frame(now){
+      resize(); gl.useProgram(program);
+      gl.uniform2f(U.resolution,canvas.width,canvas.height); gl.uniform1f(U.time,(now-start)/1000); gl.uniform2f(U.center,...center); gl.uniform1f(U.zoom,zoom);
+      gl.uniform1f(U.seed,seed); gl.uniform1f(U.strain,strain); gl.uniform2f(U.pointer,...pointer); gl.uniform1i(U.graftCount,grafts.length);
+      const packed=new Float32Array(36); grafts.forEach((g,i)=>packed.set(g,i*3)); gl.uniform3fv(U.grafts,packed);
+      gl.drawArrays(gl.TRIANGLES,0,6); requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    window.__LATTICE_ORCHARD__={version:"1.0.0",seed:()=>seed,state:()=>({seed,strain,center:[...center],zoom,grafts:grafts.map(g=>[...g])})};
+  })();
+  </script>
+</body>
+</html>
