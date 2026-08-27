@@ -53,4 +53,5 @@ yarn-error.log*
 /.archtools/
 /.datapointmarket/
 /.agentworld/
+/.frantic/
 /profile-mundodr/
