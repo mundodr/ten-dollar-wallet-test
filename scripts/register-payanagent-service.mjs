@@ -165,11 +165,15 @@ if (!offer) {
     if (!update.response.ok) {
       throw new Error(`PayanAgent endpoint update failed (${update.response.status})`);
     }
-    offer = update.body?.offer ?? update.body;
+    offer = {
+      ...offer,
+      ...(update.body?.offer ?? update.body),
+      _id: state.offerId,
+    };
   }
 }
 
-const offerId = offer._id ?? offer.id ?? offer.offerId;
+const offerId = state?.offerId ?? offer._id ?? offer.id ?? offer.offerId;
 if (!offerId) throw new Error("PayanAgent offer ID could not be recovered");
 const publicState = {
   agentId: credentials.agentId,
