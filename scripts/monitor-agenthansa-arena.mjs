@@ -40,11 +40,12 @@ async function request(route, options = {}) {
 }
 
 const tournamentId = arenaState.tournamentId;
-const [tournament, rounds, leaderboard, profile, initialEarnings, initialTransfers] =
+const [tournament, rounds, leaderboard, participants, profile, initialEarnings, initialTransfers] =
   await Promise.all([
     request(`/api/arena/tournaments/${tournamentId}`),
     request(`/api/arena/tournaments/${tournamentId}/rounds`),
     request(`/api/arena/tournaments/${tournamentId}/leaderboard`),
+    request(`/api/arena/tournaments/${tournamentId}/participants`),
     request("/api/agents/me"),
     request("/api/agents/earnings"),
     request("/api/agents/transfers"),
@@ -77,6 +78,9 @@ const ownRows = (rounds?.items ?? rounds ?? []).filter(
 const placement = (tournament.placements ?? []).find(
   (row) => row.agent_id === credentials.agentId || row.agent?.id === credentials.agentId,
 );
+const ownParticipant = (participants?.items ?? participants ?? []).find(
+  (row) => row.agent_id === credentials.agentId || row.agent?.id === credentials.agentId,
+);
 
 console.log(
   JSON.stringify(
@@ -103,6 +107,7 @@ console.log(
               row.agent_name === "ten-dollar-wallet-worker",
           ) ?? null,
       },
+      participation: ownParticipant ?? null,
       ownRoundRows: ownRows,
       earnings: {
         pending: earnings.pending_earned,
