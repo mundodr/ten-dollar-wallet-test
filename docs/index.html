@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>The $10 Wallet Test · 透明的十美元实验</title>
+  <meta name="description" content="Can tiny gifts from the internet take two empty crypto wallets to a combined $10? An honest, verifiable experiment.">
+  <meta property="og:title" content="The $10 Wallet Test">
+  <meta property="og:description" content="A transparent internet generosity experiment.">
+  <meta property="og:image" content="https://mundodr.github.io/ten-dollar-wallet-test/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="shell">
+    <a class="brand" href="#top"><b>10</b> / TEN</a>
+    <a class="ledger" href="#wallets"><i></i>公开账本 · PUBLIC LEDGER</a>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div>
+        <p class="eyebrow">一个人与 AI 的公开实验 · A PERSON + AN AI</p>
+        <h1>把两个空钱包<br>带到 <em>$10</em></h1>
+        <p class="lead">这不是慈善，也没有编造困难。我们只是诚实地问：陌生人的微小善意，能否让两个余额为零的钱包合计达到 10 美元？</p>
+        <p class="muted">No hardship story. No token sale. Just one honest question: can tiny gifts from the internet take two empty wallets to a combined $10?</p>
+        <a class="button" href="#wallets">选择网络 · CHOOSE A NETWORK ↓</a>
+      </div>
+      <aside class="progress">
+        <div class="progress-head"><span>目标 / TARGET</span><b>链上可查 · ON-CHAIN</b></div>
+        <p class="amount"><strong id="usd-total">$0.00</strong><span>/ $10.00</span></p>
+        <div class="track"><i id="progress-fill"></i></div>
+        <div class="progress-meta"><span id="percent">0.0% FUNDED</span><span id="remaining">$10.00 TO GO</span></div>
+        <dl>
+          <div><dt>SOL</dt><dd id="sol-balance">0.000000</dd></div>
+          <div><dt>BNB</dt><dd id="bnb-balance">0.000000</dd></div>
+          <div><dt>STABLECOINS</dt><dd id="stable-balance">0.00</dd></div>
+        </dl>
+        <small id="updated">起始余额核验于 2026-08-27 17:06 CST</small>
+      </aside>
+    </section>
+
+    <div class="strip"><span>NO TRAGEDY STORY</span><b>◆</b><span>NO TOKEN SALE</span><b>◆</b><span>NO RETURNS PROMISED</span><b>◆</b><span>JUST A $10 EXPERIMENT</span></div>
+
+    <section class="wallet-section shell" id="wallets">
+      <div class="section-head">
+        <div><p class="eyebrow">02 / DIRECT TO WALLET</p><h2>选择一条链，送出一点点。</h2></div>
+        <p>Choose one network. Your gift goes directly to the listed wallet—no middleman and no platform checkout.</p>
+      </div>
+
+      <div class="wallet-grid">
+        <article class="wallet solana">
+          <div class="wallet-title"><div><small>低手续费 · LOW FEE</small><h3>SOLANA</h3></div><span>● LIVE</span></div>
+          <div class="wallet-body">
+            <img src="solana-qr.png" alt="Solana address QR code">
+            <div>
+              <small>可接收 / ACCEPTS</small><p class="assets">SOL · USDC (SPL)</p>
+              <small>钱包地址 / WALLET ADDRESS</small>
+              <code id="sol-address">o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt</code>
+              <div class="actions"><button data-copy="sol-address">复制地址 · COPY</button><a target="_blank" rel="noreferrer" href="https://solscan.io/account/o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt">链上核验 · VERIFY ↗</a></div>
+            </div>
+          </div>
+          <p class="warning">仅使用 Solana 网络发送。<span>Send only on Solana.</span></p>
+        </article>
+
+        <article class="wallet bnb">
+          <div class="wallet-title"><div><small>BEP-20 网络 · NETWORK</small><h3>BNB SMART CHAIN</h3></div><span>● LIVE</span></div>
+          <div class="wallet-body">
+            <img src="bnb-qr.png" alt="BNB Smart Chain address QR code">
+            <div>
+              <small>可接收 / ACCEPTS</small><p class="assets">BNB · USDT · USDC (BEP-20)</p>
+              <small>钱包地址 / WALLET ADDRESS</small>
+              <code id="bnb-address">0x4244f335c42ebd82dbd1378a9cb192f582d9ad18</code>
+              <div class="actions"><button data-copy="bnb-address">复制地址 · COPY</button><a target="_blank" rel="noreferrer" href="https://bscscan.com/address/0x4244f335c42ebd82dbd1378a9cb192f582d9ad18">链上核验 · VERIFY ↗</a></div>
+            </div>
+          </div>
+          <p class="warning">仅使用 BNB Smart Chain (BEP-20) 网络发送。<span>Send only on BSC.</span></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="rules shell">
+      <div><p class="eyebrow">03 / THE FINE PRINT</p><h2>清楚、简单、没有套路。</h2><p class="muted">Clear, simple, and deliberately un-dramatic.</p></div>
+      <ol>
+        <li><b>01</b><div><h3>完全自愿 · VOLUNTARY</h3><p>No purchase, reward, raffle entry, or financial return.</p></div></li>
+        <li><b>02</b><div><h3>不可逆 · FINAL</h3><p>发送前请再次核对网络和地址。Crypto transfers are generally irreversible.</p></div></li>
+        <li><b>03</b><div><h3>公开可查 · VERIFIABLE</h3><p>任何人都能通过上方区块浏览器链接核验余额。</p></div></li>
+        <li><b>04</b><div><h3>不是慈善 · NOT A CHARITY</h3><p>This is a personal gift to the page creator, not a tax-deductible donation.</p></div></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="shell"><span>THE $10 WALLET TEST · 2026</span><span>BUILT IN PUBLIC · 可公开核验</span></footer>
+  <script src="app.js" defer></script>
+</body>
+</html>
