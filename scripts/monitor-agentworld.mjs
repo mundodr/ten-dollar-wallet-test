@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const baseUrl = "https://agentworld.me/api/agentworld";
@@ -9,6 +10,17 @@ const registrationTransferHash =
 const credentials = JSON.parse(
   await readFile(path.resolve(".agentworld/credentials.json"), "utf8"),
 );
+const digitalStoreStatePath = path.resolve(".agentworld/digital-store-product.json");
+
+async function readOptionalJson(file) {
+  try {
+    await access(file, constants.F_OK);
+    return JSON.parse(await readFile(file, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
 
 async function fetchJson(endpoint) {
   const url = endpoint.startsWith("https://") ? endpoint : `${baseUrl}${endpoint}`;
@@ -32,11 +44,13 @@ async function fetchJson(endpoint) {
   throw lastError ?? new Error("AgentWorld returned no response");
 }
 
-const [status, externalProfile, jobsResponse, transactionResponse] = await Promise.all([
+const digitalStoreState = await readOptionalJson(digitalStoreStatePath);
+const [status, externalProfile, jobsResponse, transactionResponse, productsResponse] = await Promise.all([
   fetchJson(`/agent/status/${encodeURIComponent(credentials.agentId)}`),
   fetchJson(`/registry/${encodeURIComponent(credentials.externalAgentId)}`),
   fetchJson("/jobs"),
   fetchJson(`https://base.blockscout.com/api/v2/addresses/${targetWallet}/transactions`),
+  fetchJson("/digital-store/products"),
 ]);
 const agent = status?.agent ?? status;
 const externalAgent = externalProfile?.agent ?? externalProfile;
@@ -47,6 +61,10 @@ const externalWallet = externalAgent?.owner_wallet ?? null;
 const exactExternalWallet = externalWallet?.toLowerCase() === targetWallet;
 const openJobs = jobs.filter((job) => job.status === "open");
 const transactions = transactionResponse?.items ?? [];
+const products = productsResponse?.products ?? [];
+const digitalStoreProduct = digitalStoreState
+  ? products.find((product) => product.id === digitalStoreState.productId) ?? null
+  : null;
 const registrationTransfer = transactions.find(
   (transaction) =>
     transaction.hash?.toLowerCase() === registrationTransferHash &&
@@ -76,6 +94,24 @@ console.log(
       pendingPayout: agent?.pending_payout ?? agent?.pending_usdc ?? null,
       paidUsdc: agent?.paid_usdc ?? agent?.total_paid_usdc ?? null,
       payoutTxHash: agent?.payout_tx_hash ?? agent?.last_payout_tx_hash ?? null,
+      digitalStoreProduct: digitalStoreState
+        ? {
+            id: digitalStoreProduct?.id ?? digitalStoreState.productId,
+            found: Boolean(digitalStoreProduct),
+            title: digitalStoreProduct?.title ?? null,
+            status: digitalStoreProduct?.status ?? null,
+            verified: digitalStoreProduct?.verified ?? null,
+            priceUsdc: digitalStoreProduct?.price_usdc ?? null,
+            sellerIdMatches:
+              digitalStoreProduct?.seller_id === credentials.agentId,
+            purchases: digitalStoreProduct?.purchases ?? null,
+            revenueUsdc: digitalStoreProduct?.revenue_usdc ?? null,
+            sellerPayoutUsdc: digitalStoreProduct?.seller_payout_usdc ?? null,
+            expectedSellerAmountPerPurchaseUsdc:
+              digitalStoreState.expectedSellerAmountPerPurchaseUsdc ?? null,
+            fileUrl: digitalStoreProduct?.file_url ?? null,
+          }
+        : null,
       verifiedRegistrationTransfer: registrationTransfer
         ? {
             hash: registrationTransfer.hash,
@@ -104,7 +140,13 @@ console.log(
   ),
 );
 
-if (!exactWallet || !exactExternalWallet || !registrationTransfer) {
+if (
+  !exactWallet ||
+  !exactExternalWallet ||
+  !registrationTransfer ||
+  (digitalStoreState &&
+    (!digitalStoreProduct || digitalStoreProduct.seller_id !== credentials.agentId))
+) {
   throw new Error(
     "AgentWorld profiles or the expected registration transfer no longer verify",
   );
