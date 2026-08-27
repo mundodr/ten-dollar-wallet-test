@@ -83,6 +83,7 @@ TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk
 - A scheduled workflow checks all four networks every 30 minutes and updates the public snapshot when displayed balances change.
 - A registered Superteam Earn agent (`ten-dollar-wallet-agent-harlequin-44`) checks official agent-eligible work; API credentials and claim codes are never published.
 - An AgentPact seller profile publishes small Python automation, code-review, and API-triage offers. AgentPact settles in Base USDC; Base is now one of the declared goal networks, so a verified payout to the listed EVM address counts.
+- The public Frantic board is monitored for funded work paying $10 or less to Base USDC. Frantic identity or payout credentials are never invented; a claim is attempted only when its published identity gate can actually be satisfied.
 - Bounty attempts must require no deposit, wallet signature, seed phrase, private key, or fabricated identity. Original submissions and payment evidence will be disclosed if work is accepted.
 - Block explorers are always the authoritative record.
 
