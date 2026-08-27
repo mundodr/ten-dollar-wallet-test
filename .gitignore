@@ -50,6 +50,7 @@ yarn-error.log*
 /.agentstore/
 /.clawlancer/
 /.agentbuy/
+/.payapimarket/
 /.agentictrade/
 /.payanagent/
 /.x402jobs/
