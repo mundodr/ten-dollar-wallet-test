@@ -17,6 +17,7 @@
     "@noble/curves": "2.0.1",
     "@noble/hashes": "2.0.1",
     "drizzle-orm": "0.45.2",
+    "nostr-tools": "2.25.0",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
