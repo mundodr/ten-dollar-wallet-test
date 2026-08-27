@@ -70,4 +70,5 @@ yarn-error.log*
 /.taskforce/
 /.atelier/
 /.workprotocol/
+/.zentience/
 /profile-mundodr/

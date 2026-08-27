@@ -11,6 +11,8 @@ const privateDir = path.resolve(".atelier");
 const credentialsPath = path.join(privateDir, "credentials.json");
 const solanaKeypairPath = path.join(privateDir, "owner-solana-keypair.json");
 const serviceTitle = "API Brief Acceptance Checklist";
+const endpointUrl =
+  "https://simply-technician-crowd-newton.trycloudflare.com/invoke";
 
 async function readJsonIfPresent(filePath) {
   try {
@@ -44,6 +46,23 @@ async function requestJson(route, options = {}) {
     error.status = response.status;
     error.body = body;
     throw error;
+  }
+  return body?.data ?? body;
+}
+
+async function getX402Discovery(serviceId) {
+  const response = await fetch(
+    `${apiBase}/x402/discover?service_id=${encodeURIComponent(serviceId)}`,
+    {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+  const body = await response.json().catch(() => null);
+  if (response.status !== 402 || !body) {
+    throw new Error(
+      `Atelier x402 discovery failed (${response.status}): ${body?.error ?? "missing payment challenge"}`,
+    );
   }
   return body?.data ?? body;
 }
@@ -132,6 +151,7 @@ await requestJson("/agents/me", {
   body: JSON.stringify({
     payout_address_base: targetAddress,
     payout_chain: "base",
+    endpoint_url: endpointUrl,
   }),
 });
 
@@ -206,14 +226,13 @@ service = await requestJson(`/services/${configuredServiceId}`, {
   }),
 });
 
-const [profile, refreshedServices, x402Catalog] = await Promise.all([
+const [profile, refreshedServices, x402Discovery] = await Promise.all([
   requestJson("/agents/me", { headers: authHeaders }),
   requestJson(`/agents/${credentials.agentId}/services`, { headers: authHeaders }),
-  requestJson("/x402/services"),
+  getX402Discovery(configuredServiceId),
 ]);
 services = listFrom(refreshedServices, "services");
 service = services.find((item) => item?.title === serviceTitle) ?? service;
-const x402Services = listFrom(x402Catalog, "services");
 const profilePayout =
   profile?.payout_address_base ?? profile?.payout_wallet ?? profile?.payout_address ?? null;
 const exactPayout =
@@ -228,9 +247,14 @@ const exactService =
   service?.active !== 0 &&
   service?.active !== false;
 const serviceId = service?.id ?? service?.service_id ?? null;
-const x402Listed = x402Services.some(
-  (item) => (item?.id ?? item?.service_id) === serviceId,
+const baseX402Quote = x402Discovery?.accepts?.find(
+  (item) => item?.network === "eip155:8453",
 );
+const x402Listed =
+  x402Discovery?.resource?.url?.endsWith(serviceId) === true &&
+  baseX402Quote?.asset?.toLowerCase() ===
+    "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" &&
+  baseX402Quote?.amount === "11000";
 
 console.log(
   JSON.stringify(
@@ -241,6 +265,8 @@ console.log(
       ownerAddress: wallet.publicKey.toBase58(),
       marketable: profile?.marketable ?? null,
       verified: profile?.verified ?? null,
+      endpointUrl: profile?.endpoint_url ?? null,
+      hasEndpoint: Boolean(profile?.endpoint_url ?? profile?.has_endpoint),
       payoutChain: profile?.payout_chain ?? null,
       payoutAddress: profilePayout,
       exactPayout,
@@ -249,6 +275,7 @@ console.log(
       servicePriceUsd: service?.price_usd ?? null,
       exactService,
       x402Listed,
+      baseX402AmountAtomic: baseX402Quote?.amount ?? null,
       publicAgentUrl: credentials.slug
         ? `https://app.useatelier.ai/agents/${credentials.slug}`
         : null,
@@ -258,7 +285,13 @@ console.log(
   ),
 );
 
-if (!exactPayout || !exactService || !serviceId) {
+if (
+  !exactPayout ||
+  !exactService ||
+  !serviceId ||
+  !x402Listed ||
+  profile?.endpoint_url !== endpointUrl
+) {
   throw new Error("Atelier profile or service does not match the intended terms");
 }
 }

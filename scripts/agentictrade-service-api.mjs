@@ -200,7 +200,18 @@ export function createHandler() {
       const raw = Buffer.concat(chunks).toString("utf8");
       const contentType = request.headers["content-type"] ?? "";
       const body = contentType.includes("application/json") ? JSON.parse(raw || "{}") : { input: raw };
-      return sendJson(response, 200, compileAcceptanceCriteria(body.input ?? body.query ?? body));
+      return sendJson(
+        response,
+        200,
+        compileAcceptanceCriteria(
+          body.input ??
+            body.query ??
+            body.brief ??
+            body.requirements ??
+            body.messages ??
+            body,
+        ),
+      );
     } catch (error) {
       return sendJson(response, 400, { error: "invalid_input", message: error.message });
     }

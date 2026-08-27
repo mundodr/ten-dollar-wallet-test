@@ -3,6 +3,8 @@ import path from "node:path";
 
 const apiBase = "https://api.useatelier.ai/api";
 const targetAddress = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
+const endpointUrl =
+  "https://simply-technician-crowd-newton.trycloudflare.com/invoke";
 const credentials = JSON.parse(
   await readFile(path.resolve(".atelier/credentials.json"), "utf8"),
 );
@@ -25,6 +27,23 @@ async function get(route, authenticated = false) {
   return body?.data ?? body;
 }
 
+async function getX402Discovery(serviceId) {
+  const response = await fetch(
+    `${apiBase}/x402/discover?service_id=${encodeURIComponent(serviceId)}`,
+    {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(30_000),
+    },
+  );
+  const body = await response.json().catch(() => null);
+  if (response.status !== 402 || !body) {
+    throw new Error(
+      `Atelier x402 discovery failed (${response.status}): ${body?.error ?? "missing payment challenge"}`,
+    );
+  }
+  return body?.data ?? body;
+}
+
 function listFrom(data, key) {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.[key])) return data[key];
@@ -32,7 +51,7 @@ function listFrom(data, key) {
   return [];
 }
 
-const [profile, publicProfile, serviceData, actionableData, completedData, bounties, stats, x402Data] =
+const [profile, publicProfile, serviceData, actionableData, completedData, bounties, stats] =
   await Promise.all([
     get("/agents/me", true),
     get(`/agents/${credentials.agentId}`),
@@ -44,14 +63,12 @@ const [profile, publicProfile, serviceData, actionableData, completedData, bount
     get(`/agents/${credentials.agentId}/orders?status=delivered,completed`, true),
     get("/bounties?status=open"),
     get("/platform-stats"),
-    get("/x402/services"),
   ]);
 
 const services = listFrom(serviceData, "services");
 const actionableOrders = listFrom(actionableData, "orders");
 const settledOrders = listFrom(completedData, "orders");
 const openBounties = listFrom(bounties, "bounties");
-const x402Services = listFrom(x402Data, "services");
 const payoutAddress =
   profile?.payout_address_base ?? profile?.payout_wallet ?? profile?.payout_address ?? null;
 const exactPayout =
@@ -70,9 +87,18 @@ const exactPublicListing =
       service?.payout_chain === "base" &&
       service?.payout_address_base?.toLowerCase() === targetAddress,
   );
-const x402Listed = x402Services.some(
+const serviceId = services.find(
   (service) => service?.title === "API Brief Acceptance Checklist",
+)?.id;
+const x402Discovery = serviceId ? await getX402Discovery(serviceId) : null;
+const baseX402Quote = x402Discovery?.accepts?.find(
+  (item) => item?.network === "eip155:8453",
 );
+const x402Listed =
+  x402Discovery?.resource?.url?.endsWith(serviceId) === true &&
+  baseX402Quote?.asset?.toLowerCase() ===
+    "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" &&
+  baseX402Quote?.amount === "11000";
 
 const summarizeOrder = (order) => ({
   id: order?.id ?? order?.order_id ?? null,
@@ -93,9 +119,16 @@ console.log(
       slug: credentials.slug ?? profile?.slug ?? null,
       marketable: profile?.marketable ?? null,
       verified: profile?.verified ?? null,
+      endpointUrl: profile?.endpoint_url ?? null,
+      hasEndpoint: Boolean(
+        profile?.endpoint_url ??
+          profile?.has_endpoint ??
+          publicAgent?.has_endpoint,
+      ),
       publicAgentName: publicAgent?.name ?? null,
       exactPublicListing,
       x402Listed,
+      baseX402AmountAtomic: baseX402Quote?.amount ?? null,
       payoutChain: profile?.payout_chain ?? null,
       payoutAddress,
       exactPayout,
@@ -127,6 +160,12 @@ console.log(
   ),
 );
 
-if (!exactPayout || !exactPublicListing) {
+if (
+  !exactPayout ||
+  !exactPublicListing ||
+  !x402Listed ||
+  profile?.endpoint_url !== endpointUrl ||
+  publicAgent?.has_endpoint !== true
+) {
   throw new Error("Atelier payout destination or public listing has drifted");
 }
