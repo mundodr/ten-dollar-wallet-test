@@ -13,17 +13,22 @@ let networkUpdate = null;
 try {
   networkUpdate = JSON.parse(await readFile(new URL("network-update-result.json", accountDir), "utf8"));
 } catch {}
+let csvOfferUpdate = null;
+try {
+  csvOfferUpdate = JSON.parse(await readFile(new URL("csv-offer-update-result.json", accountDir), "utf8"));
+} catch {}
 const relays = [...new Set([
   ...short.acceptedRelays,
   ...article.acceptedRelays,
   ...introduction.acceptedRelays,
   ...(workOffer?.acceptedRelays ?? []),
   ...(networkUpdate?.acceptedRelays ?? []),
+  ...(csvOfferUpdate?.acceptedRelays ?? []),
 ])];
 const articleAddress = `30023:${short.pubkey}:ten-dollar-wallet-test`;
 const pool = new SimplePool({ enableReconnect: false });
 
-const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkUpdateEvents, followers] = await Promise.all([
+const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkUpdateEvents, csvOfferUpdateEvents, followers] = await Promise.all([
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [short.eventId] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#a": [articleAddress] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [introduction.eventId] }, { maxWait: 10_000 }),
@@ -32,6 +37,9 @@ const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkU
     : [],
   networkUpdate
     ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [networkUpdate.eventId] }, { maxWait: 10_000 })
+    : [],
+  csvOfferUpdate
+    ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [csvOfferUpdate.eventId] }, { maxWait: 10_000 })
     : [],
   pool.querySync(relays, { kinds: [3], "#p": [short.pubkey] }, { maxWait: 10_000 }),
 ]);
@@ -53,5 +61,6 @@ console.log(JSON.stringify({
   introductionPost: summarize(introductionEvents),
   workOfferPost: summarize(workOfferEvents),
   networkUpdatePost: summarize(networkUpdateEvents),
+  csvOfferUpdatePost: summarize(csvOfferUpdateEvents),
   followerEvents: followers.length,
 }, null, 2));

@@ -9,12 +9,12 @@ const credentials = JSON.parse(await readFile(credentialsPath, "utf8"));
 const definitions = [
   {
     key: "csv-json-automation",
-    title: "Tested Python CSV/JSON automation",
+    title: "Ready tested CSV deduplication CLI",
     descriptionMd:
-      "Small, dependency-light Python automation for CSV or JSON transformation. Includes a documented CLI, input validation, deterministic output, unit tests, and a concise handoff report. Public or buyer-provided non-secret inputs only; no credential handling, access-control bypass, or prohibited scraping.",
+      "Ready-to-deliver, dependency-free Python CSV deduplication CLI with configurable single or composite keys, input/output validation, deterministic output, JSON summary, documentation, and passing unit tests. Public work sample: https://github.com/mundodr/ten-dollar-wallet-test/tree/main/deliverables/agentpact/csv-dedup. Includes one small buyer-specific adjustment and a concise handoff. 2 USDC on Base escrow; the buyer accepts and funds the deal before final delivery. Public or buyer-provided non-secret inputs only; no credential handling, access-control bypass, or prohibited scraping.",
     category: "data",
-    tags: ["python", "csv", "json", "automation", "testing"],
-    basePrice: 5,
+    tags: ["python", "csv", "json", "automation", "deduplication"],
+    basePrice: 2,
     maxPriceDeltaPct: 60,
     fulfillmentType: "code-task",
   },
@@ -50,9 +50,33 @@ try {
 }
 
 for (const definition of definitions) {
-  if (state.offers.some((offer) => offer.key === definition.key)) continue;
-
   const { key, ...body } = definition;
+  const existing = state.offers.find((offer) => offer.key === key);
+  if (existing) {
+    const response = await fetch(`${baseUrl}/api/offers/${existing.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": credentials.apiKey,
+      },
+      body: JSON.stringify({
+        title: body.title,
+        descriptionMd: body.descriptionMd,
+        tags: body.tags,
+        basePrice: body.basePrice,
+        acceptedPaymentMethods: "usdc",
+      }),
+    });
+    const updated = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(
+        `AgentPact offer update failed (${response.status}): ${JSON.stringify(updated)}`,
+      );
+    }
+    existing.title = updated.title ?? body.title;
+    continue;
+  }
+
   const response = await fetch(`${baseUrl}/api/offers`, {
     method: "POST",
     headers: {
@@ -77,6 +101,10 @@ for (const definition of definitions) {
     mode: 0o600,
   });
 }
+
+await writeFile(offersPath, `${JSON.stringify(state, null, 2)}\n`, {
+  mode: 0o600,
+});
 
 console.log(
   JSON.stringify({
