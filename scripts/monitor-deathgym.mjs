@@ -10,6 +10,9 @@ const checkpointDir = path.join(root, "local/checkpoints/long-5b");
 const evaluationsDir = path.join(root, "local/evaluations");
 const serviceName = "deathgym-taskmarket-5b.service";
 const targetSteps = 5_000_000_000;
+const stepsPerIteration = 65_536;
+const checkpointEverySteps = 250_000_000;
+const minimumNextSubmissionXp = 266.5;
 const taskExpiry = "2026-08-29T21:40:19.006Z";
 const workerAddress = "0xbb8f5dA5e6E14BD221e720D8e1798Fb8A5c7EA71";
 const leaderboardGistId = "545d0b413e31b315a017157339adca9e";
@@ -136,8 +139,24 @@ const match = latestLine?.match(/it\s+(\d+)\/(\d+).*?fps:\s*(\d+).*?death_xp:\s*
 const currentIteration = match ? Number(match[1]) : 0;
 const totalIterations = match ? Number(match[2]) : 76_293;
 const fps = match ? Number(match[3]) : null;
-const completedSteps = Math.min(targetSteps, currentIteration * 65_536);
+const completedSteps = Math.min(targetSteps, currentIteration * stepsPerIteration);
 const remainingSeconds = fps ? Math.max(0, targetSteps - completedSteps) / fps : null;
+const checkpointEveryIterations = Math.max(
+  1,
+  Math.floor(checkpointEverySteps / stepsPerIteration),
+);
+const nextCheckpointIteration = Math.min(
+  totalIterations,
+  (Math.floor(currentIteration / checkpointEveryIterations) + 1) * checkpointEveryIterations,
+);
+const nextCheckpointSteps = Math.min(
+  targetSteps,
+  nextCheckpointIteration * stepsPerIteration,
+);
+const nextCheckpointRemainingSteps = Math.max(0, nextCheckpointSteps - completedSteps);
+const nextCheckpointRemainingSeconds = fps
+  ? nextCheckpointRemainingSteps / fps
+  : null;
 
 const evaluationFiles = (await filesIn(evaluationsDir, ".json")).filter(
   (file) => !file.name.endsWith(".submission.json"),
@@ -165,6 +184,14 @@ const leaderboard = await publicLeaderboard();
 const submittedArchiveHashes = submissions
   .map((submission) => submission.archiveSha256)
   .filter(Boolean);
+const bestEvaluatedXp = evaluations.reduce(
+  (best, evaluation) => Math.max(best, Number(evaluation.publicBankMeanXp) || 0),
+  0,
+);
+const bestSubmittedXp = submissions.reduce(
+  (best, submission) => Math.max(best, Number(submission.publicBankMeanXp) || 0),
+  0,
+);
 
 console.log(JSON.stringify({
   checkedAt: new Date().toISOString(),
@@ -179,6 +206,18 @@ console.log(JSON.stringify({
     latestLine,
     estimatedRemainingHours: remainingSeconds === null ? null : Number((remainingSeconds / 3600).toFixed(2)),
     estimatedFinishAt: remainingSeconds === null ? null : new Date(Date.now() + remainingSeconds * 1000).toISOString(),
+    nextCheckpoint: {
+      iteration: nextCheckpointIteration,
+      completedSteps: nextCheckpointSteps,
+      fileName: `step${Math.floor(nextCheckpointSteps / 1_000_000)}M.safetensors`,
+      stepsRemaining: nextCheckpointRemainingSteps,
+      estimatedMinutes: nextCheckpointRemainingSeconds === null
+        ? null
+        : Number((nextCheckpointRemainingSeconds / 60).toFixed(1)),
+      estimatedAt: nextCheckpointRemainingSeconds === null
+        ? null
+        : new Date(Date.now() + nextCheckpointRemainingSeconds * 1000).toISOString(),
+    },
   },
   task: {
     referenceCode: "TSK-E4RXQS7X",
@@ -187,6 +226,10 @@ console.log(JSON.stringify({
     hoursUntilExpiry: Number(((new Date(taskExpiry).getTime() - Date.now()) / 3_600_000).toFixed(2)),
     currentPublicLeaderXp: leaderboard.currentLeaderXp ?? 341.1,
     baseline20mPublicXp: 179.5,
+    bestEvaluatedXp,
+    bestSubmittedXp,
+    minimumNextSubmissionXp,
+    nextSubmissionRule: `Evaluate each stable checkpoint once. Submit only at or above ${minimumNextSubmissionXp} XP, or submit the best remaining unsubmitted checkpoint within two hours of expiry.`,
   },
   publicLeaderboard: {
     source: leaderboard.source,
