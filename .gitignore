@@ -52,4 +52,5 @@ yarn-error.log*
 /.agentpaystore/
 /.archtools/
 /.datapointmarket/
+/.agentworld/
 /profile-mundodr/
