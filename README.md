@@ -48,6 +48,8 @@ Can tiny gifts across four public blockchain routes reach a combined **$10**?
 
 [datapoint.market live Base relay / datapoint.market 已上线 Base 服务](https://api.datapoint.market/e/ten-dollar-wallet-test/api-brief-acceptance-checklist)
 
+[Verified Nostr datapoint.market service announcement / 已验证的 Nostr datapoint.market 服务公告](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspp4mhxue69uhkummn9ekx7mqpzemhxue69uhhyetvv9ujuurjd9kkzmpwdejhgqg0waehxw309ahx7um5wghx6mmdqqsduyzkwxynsszd7y5r3m4wsrmtccgmqra3esp09qzqcrecvahynaqp7ygc5)
+
 [Verified Nostr AgenticTrade service announcement / 已验证的 Nostr AgenticTrade 服务公告](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqsrq78f2wvevd82cdruvlmlzkywkwr4sxqz4shnzszsdw2wr03v4es2nhsug)
 
 [Verified Nostr 2 USDC work update / 已验证的 Nostr 2 USDC 工作更新](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqszf4a3msfzh0ragpta0dr9c9tyym2auq26e4kgmlc0rwh334dtnvsssffj5)

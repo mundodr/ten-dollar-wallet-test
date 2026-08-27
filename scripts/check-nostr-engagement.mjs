@@ -29,6 +29,12 @@ try {
 } catch {
   // This publication is optional.
 }
+let datapointService = null;
+try {
+  datapointService = JSON.parse(await readFile(new URL("datapoint-service-result.json", accountDir), "utf8"));
+} catch {
+  // This publication is optional.
+}
 const relays = [...new Set([
   ...short.acceptedRelays,
   ...article.acceptedRelays,
@@ -37,11 +43,12 @@ const relays = [...new Set([
   ...(networkUpdate?.acceptedRelays ?? []),
   ...(csvOfferUpdate?.acceptedRelays ?? []),
   ...(agentictradeService?.acceptedRelays ?? []),
+  ...(datapointService?.acceptedRelays ?? []),
 ])];
 const articleAddress = `30023:${short.pubkey}:ten-dollar-wallet-test`;
 const pool = new SimplePool({ enableReconnect: false });
 
-const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkUpdateEvents, csvOfferUpdateEvents, agentictradeServiceEvents, followers] = await Promise.all([
+const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkUpdateEvents, csvOfferUpdateEvents, agentictradeServiceEvents, datapointServiceEvents, followers] = await Promise.all([
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [short.eventId] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#a": [articleAddress] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [introduction.eventId] }, { maxWait: 10_000 }),
@@ -56,6 +63,9 @@ const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkU
     : [],
   agentictradeService
     ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [agentictradeService.eventId] }, { maxWait: 10_000 })
+    : [],
+  datapointService
+    ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [datapointService.eventId] }, { maxWait: 10_000 })
     : [],
   pool.querySync(relays, { kinds: [3], "#p": [short.pubkey] }, { maxWait: 10_000 }),
 ]);
@@ -79,5 +89,6 @@ console.log(JSON.stringify({
   networkUpdatePost: summarize(networkUpdateEvents),
   csvOfferUpdatePost: summarize(csvOfferUpdateEvents),
   agentictradeServicePost: summarize(agentictradeServiceEvents),
+  datapointServicePost: summarize(datapointServiceEvents),
   followerEvents: followers.length,
 }, null, 2));
