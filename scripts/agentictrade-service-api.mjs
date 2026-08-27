@@ -1,4 +1,7 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const maxBodyBytes = 64 * 1024;
@@ -191,6 +194,75 @@ function decodePaymentRequired(value) {
   }
 }
 
+function safeEqualText(left, right) {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return (
+    leftBuffer.length === rightBuffer.length &&
+    timingSafeEqual(leftBuffer, rightBuffer)
+  );
+}
+
+function verifyWebhookSignature(rawBody, signature, secret) {
+  if (!signature || !secret) return false;
+  const digest = createHmac("sha256", secret).update(rawBody).digest();
+  const expectedHex = digest.toString("hex");
+  const expectedBase64 = digest.toString("base64");
+  const supplied = signature.trim();
+  return [expectedHex, `sha256=${expectedHex}`, expectedBase64].some(
+    (candidate) => safeEqualText(supplied, candidate),
+  );
+}
+
+async function receiveAgentPactWebhook(
+  request,
+  response,
+  { agentPactWebhookSecret, recordAgentPactWebhook },
+) {
+  if (!agentPactWebhookSecret) {
+    return sendJson(response, 503, { error: "webhook_not_configured" });
+  }
+
+  let rawBody;
+  try {
+    rawBody = await readRequestBody(request);
+  } catch (error) {
+    return sendJson(response, error.statusCode ?? 400, {
+      error: error.message,
+    });
+  }
+  const signature =
+    request.headers["x-agentpact-signature"] ??
+    request.headers["x-webhook-signature"] ??
+    request.headers["x-signature"];
+  if (
+    typeof signature !== "string" ||
+    !verifyWebhookSignature(rawBody, signature, agentPactWebhookSecret)
+  ) {
+    return sendJson(response, 401, { error: "invalid_webhook_signature" });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(rawBody.toString("utf8"));
+  } catch {
+    return sendJson(response, 400, { error: "invalid_json" });
+  }
+  if (!event || typeof event !== "object" || Array.isArray(event)) {
+    return sendJson(response, 400, { error: "invalid_event" });
+  }
+
+  try {
+    await recordAgentPactWebhook?.({
+      receivedAt: new Date().toISOString(),
+      event,
+    });
+  } catch {
+    return sendJson(response, 500, { error: "webhook_record_failed" });
+  }
+  return sendJson(response, 200, { ok: true });
+}
+
 async function proxyPayanX402(
   request,
   response,
@@ -269,6 +341,8 @@ async function proxyPayanX402(
 export function createHandler({
   fetchImpl = fetch,
   payanX402Url = defaultPayanX402Url,
+  agentPactWebhookSecret = null,
+  recordAgentPactWebhook = null,
 } = {}) {
   return async (request, response) => {
     const pathname = new URL(request.url, "http://localhost").pathname;
@@ -286,6 +360,15 @@ export function createHandler({
       (request.method === "GET" || request.method === "POST")
     ) {
       return proxyPayanX402(request, response, { fetchImpl, payanX402Url });
+    }
+    if (pathname === "/agentpact/webhook") {
+      if (request.method !== "POST") {
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      }
+      return receiveAgentPactWebhook(request, response, {
+        agentPactWebhookSecret,
+        recordAgentPactWebhook,
+      });
     }
     if (request.method === "GET") {
       return sendJson(response, 200, {
@@ -328,7 +411,27 @@ export function createHandler({
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number.parseInt(process.env.AGENTICTRADE_SERVICE_PORT ?? "8788", 10);
-  const server = createServer(createHandler());
+  let agentPactWebhookSecret = null;
+  try {
+    const webhookConfig = JSON.parse(
+      await readFile(path.resolve(".agentpact/webhook.json"), "utf8"),
+    );
+    agentPactWebhookSecret = webhookConfig.secret ?? null;
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  const recordAgentPactWebhook = async (entry) => {
+    const directory = path.resolve(".agentpact");
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    await appendFile(
+      path.join(directory, "webhook-events.ndjson"),
+      `${JSON.stringify(entry)}\n`,
+      { encoding: "utf8", mode: 0o600 },
+    );
+  };
+  const server = createServer(
+    createHandler({ agentPactWebhookSecret, recordAgentPactWebhook }),
+  );
   server.listen(port, "127.0.0.1", () => {
     console.log(JSON.stringify({ ready: true, host: "127.0.0.1", port }));
   });
