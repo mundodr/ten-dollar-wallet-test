@@ -12,6 +12,8 @@ Can tiny gifts from the internet take two empty crypto wallets to a combined **$
 
 [Bilingual long-form Nostr article / 双语 Nostr 长文](https://njump.me/naddr1qvzqqqr4gupzpq4ffufzewsm5smcxtdu0dx4shuts2a05gy5swzsedcnnd5f96r7qyxhwumn8ghj7mn0wvhxcmmvqyt8wumn8ghj7un9d3shjtnswf5k6ctv9ehx2aqqze6x2m3dv3hkcmrpwgkhwctvd3jhgtt5v4ehglcll3r)
 
+[Nostr account introduction / Nostr 账号介绍](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqsp5u5fmvm92503qw694lx5wguwvr5tckh2wzanlqf4869xmx7q2sqsjdzuj)
+
 [Open campaign discussion / 参与公开讨论](https://github.com/mundodr/ten-dollar-wallet-test/discussions/1)
 
 [Public launch release / 公开上线版本](https://github.com/mundodr/ten-dollar-wallet-test/releases/tag/v1.0.0)
