@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 
 const SOL_ADDRESS = "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt";
 const BNB_ADDRESS = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
+const BASE_ADDRESS = BNB_ADDRESS;
+const TRON_ADDRESS = "TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk";
 
 type WalletCardProps = {
-  id: "solana" | "bnb";
+  id: "solana" | "bnb" | "base" | "tron";
   network: string;
   networkCn: string;
   address: string;
@@ -27,6 +29,12 @@ function WalletCard({
   accent,
 }: WalletCardProps) {
   const [copied, setCopied] = useState(false);
+  const networkNames = {
+    solana: "Solana",
+    bnb: "BNB Smart Chain (BEP-20)",
+    base: "Base",
+    tron: "TRON (TRC-20)",
+  };
 
   async function copyAddress() {
     await navigator.clipboard.writeText(address);
@@ -65,7 +73,7 @@ function WalletCard({
       </div>
 
       <p className="network-warning">
-        仅使用 {id === "solana" ? "Solana" : "BNB Smart Chain (BEP-20)"} 网络发送。
+        仅使用 {networkNames[id]} 网络发送。
         <span> Send only on the named network.</span>
       </p>
     </article>
@@ -74,7 +82,17 @@ function WalletCard({
 
 export default function Home() {
   const [progress, setProgress] = useState<{
-    balances: { sol: number; solUsdc: number; bnb: number; bscUsdt: number; bscUsdc: number };
+    balances: {
+      sol: number;
+      solUsdc: number;
+      bnb: number;
+      bscUsdt: number;
+      bscUsdc: number;
+      baseEth: number;
+      baseUsdc: number;
+      trx: number;
+      tronUsdt: number;
+    };
     usdTotal: number;
     percent: number;
     updatedAt: string;
@@ -108,15 +126,15 @@ export default function Home() {
         <div className="hero-copy">
           <p className="eyebrow">一个人与 AI 的公开实验 · A PERSON + AN AI</p>
           <h1>
-            把两个空钱包
+            让四条链的小额到账
             <br />
-            带到 <em>$10</em>
+            合计达到 <em>$10</em>
           </h1>
           <p className="lead-cn">
-            这不是慈善，也没有编造困难。我们只是诚实地问：陌生人的微小善意，能否让两个余额为零的钱包合计达到 10 美元？
+            这不是慈善，也没有编造困难。我们只是诚实地问：陌生人的微小善意，能否让 Solana、BNB Smart Chain、Base 和 TRON 上的公开地址合计达到 10 美元？
           </p>
           <p className="lead-en">
-            No hardship story. No token sale. Just one honest question: can tiny gifts from the internet take two empty wallets to a combined $10?
+            No hardship story. No token sale. Can tiny gifts across four public blockchain routes reach a combined $10?
           </p>
           <div className="hero-actions">
             <a className="primary-button" href="#wallets">选择网络 · CHOOSE A NETWORK ↓</a>
@@ -141,7 +159,15 @@ export default function Home() {
           <div className="starting-balances">
             <p><span>SOL</span><b>{(progress?.balances.sol ?? 0).toFixed(6)}</b></p>
             <p><span>BNB</span><b>{(progress?.balances.bnb ?? 0).toFixed(6)}</b></p>
-            <p><span>STABLECOINS</span><b>{((progress?.balances.solUsdc ?? 0) + (progress?.balances.bscUsdt ?? 0) + (progress?.balances.bscUsdc ?? 0)).toFixed(2)}</b></p>
+            <p><span>BASE ETH</span><b>{(progress?.balances.baseEth ?? 0).toFixed(6)}</b></p>
+            <p><span>TRX</span><b>{(progress?.balances.trx ?? 0).toFixed(6)}</b></p>
+            <p><span>STABLECOINS</span><b>{(
+              (progress?.balances.solUsdc ?? 0) +
+              (progress?.balances.bscUsdt ?? 0) +
+              (progress?.balances.bscUsdc ?? 0) +
+              (progress?.balances.baseUsdc ?? 0) +
+              (progress?.balances.tronUsdt ?? 0)
+            ).toFixed(2)}</b></p>
           </div>
           <p className="timestamp">
             {progress ? `链上更新 · ${new Date(progress.updatedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}` : "起始余额核验于 2026-08-27 17:06 CST"}
@@ -188,6 +214,26 @@ export default function Home() {
             assets="BNB · USDT · USDC (BEP-20)"
             accent="#f4ba2a"
           />
+          <WalletCard
+            id="base"
+            network="BASE"
+            networkCn="BASE L2 · NETWORK"
+            address={BASE_ADDRESS}
+            qr="/base-qr.png"
+            explorer={`https://basescan.org/address/${BASE_ADDRESS}`}
+            assets="ETH · USDC (BASE)"
+            accent="#5b7cff"
+          />
+          <WalletCard
+            id="tron"
+            network="TRON"
+            networkCn="TRC-20 网络 · NETWORK"
+            address={TRON_ADDRESS}
+            qr="/tron-qr.png"
+            explorer={`https://tronscan.org/#/address/${TRON_ADDRESS}`}
+            assets="TRX · USDT (TRC-20)"
+            accent="#ff4d5f"
+          />
         </div>
       </section>
 
@@ -200,7 +246,7 @@ export default function Home() {
         <ol>
           <li><span>01</span><div><h3>完全自愿 · VOLUNTARY</h3><p>不提供商品、服务、抽奖资格或回报。No purchase, reward, raffle entry, or financial return.</p></div></li>
           <li><span>02</span><div><h3>不可逆 · FINAL</h3><p>链上转账通常无法撤回；发送前请再次核对网络和地址。Crypto transfers are generally irreversible—check twice.</p></div></li>
-          <li><span>03</span><div><h3>公开可查 · VERIFIABLE</h3><p>两个地址和起始余额公开展示，任何人都能在区块浏览器核验。Both wallets and their starting balances are public.</p></div></li>
+          <li><span>03</span><div><h3>公开可查 · VERIFIABLE</h3><p>四条链上的三个地址和起始余额公开展示，任何人都能在区块浏览器核验。All three addresses across four networks and their starting balances are public.</p></div></li>
           <li><span>04</span><div><h3>不是慈善 · NOT A CHARITY</h3><p>这是给页面创建者的个人赠与，不开具抵税凭证。This is a personal gift to the page creator, not a tax-deductible donation.</p></div></li>
         </ol>
       </section>

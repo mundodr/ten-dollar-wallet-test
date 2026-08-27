@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>The $10 Wallet Test · 透明的十美元实验</title>
-  <meta name="description" content="Can tiny gifts from the internet take two empty crypto wallets to a combined $10? An honest, verifiable experiment.">
+  <meta name="description" content="Can tiny gifts across four public blockchain routes reach a combined $10? An honest, verifiable experiment.">
   <meta name="robots" content="index,follow,max-image-preview:large">
   <link rel="canonical" href="https://mundodr.github.io/ten-dollar-wallet-test/">
   <link rel="sitemap" type="application/xml" href="https://mundodr.github.io/ten-dollar-wallet-test/sitemap.xml">
@@ -24,9 +24,9 @@
     <section class="hero shell">
       <div>
         <p class="eyebrow">一个人与 AI 的公开实验 · A PERSON + AN AI</p>
-        <h1>把两个空钱包<br>带到 <em>$10</em></h1>
-        <p class="lead">这不是慈善，也没有编造困难。我们只是诚实地问：陌生人的微小善意，能否让两个余额为零的钱包合计达到 10 美元？</p>
-        <p class="muted">No hardship story. No token sale. Just one honest question: can tiny gifts from the internet take two empty wallets to a combined $10?</p>
+        <h1>让四条链的小额到账<br>合计达到 <em>$10</em></h1>
+        <p class="lead">这不是慈善，也没有编造困难。我们只是诚实地问：陌生人的微小善意，能否让 Solana、BNB Smart Chain、Base 和 TRON 上的公开地址合计达到 10 美元？</p>
+        <p class="muted">No hardship story. No token sale. Just one honest question: can tiny gifts across four public blockchain routes reach a combined $10?</p>
         <a class="button" href="#wallets">选择网络 · CHOOSE A NETWORK ↓</a>
       </div>
       <aside class="progress">
@@ -37,6 +37,8 @@
         <dl>
           <div><dt>SOL</dt><dd id="sol-balance">0.000000</dd></div>
           <div><dt>BNB</dt><dd id="bnb-balance">0.000000</dd></div>
+          <div><dt>BASE ETH</dt><dd id="base-balance">0.000000</dd></div>
+          <div><dt>TRX</dt><dd id="trx-balance">0.000000</dd></div>
           <div><dt>STABLECOINS</dt><dd id="stable-balance">0.00</dd></div>
         </dl>
         <small id="updated">余额快照 · 2026-08-27 17:06 CST · 区块浏览器为准</small>
@@ -79,6 +81,34 @@
           </div>
           <p class="warning">仅使用 BNB Smart Chain (BEP-20) 网络发送。<span>Send only on BSC.</span></p>
         </article>
+
+        <article class="wallet base" style="--accent:#5b7cff">
+          <div class="wallet-title"><div><small>BASE L2 · NETWORK</small><h3>BASE</h3></div><span>● LIVE</span></div>
+          <div class="wallet-body">
+            <img src="base-qr.png" alt="Base address QR code">
+            <div>
+              <small>可接收 / ACCEPTS</small><p class="assets">ETH · USDC (BASE)</p>
+              <small>钱包地址 / WALLET ADDRESS</small>
+              <code id="base-address">0x4244f335c42ebd82dbd1378a9cb192f582d9ad18</code>
+              <div class="actions"><button data-copy="base-address">复制地址 · COPY</button><a target="_blank" rel="noreferrer" href="https://basescan.org/address/0x4244f335c42ebd82dbd1378a9cb192f582d9ad18">链上核验 · VERIFY ↗</a></div>
+            </div>
+          </div>
+          <p class="warning">仅使用 Base 网络发送。<span>Send only on Base.</span></p>
+        </article>
+
+        <article class="wallet tron" style="--accent:#ff4d5f">
+          <div class="wallet-title"><div><small>TRC-20 网络 · NETWORK</small><h3>TRON</h3></div><span>● LIVE</span></div>
+          <div class="wallet-body">
+            <img src="tron-qr.png" alt="TRON address QR code">
+            <div>
+              <small>可接收 / ACCEPTS</small><p class="assets">TRX · USDT (TRC-20)</p>
+              <small>钱包地址 / WALLET ADDRESS</small>
+              <code id="tron-address">TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk</code>
+              <div class="actions"><button data-copy="tron-address">复制地址 · COPY</button><a target="_blank" rel="noreferrer" href="https://tronscan.org/#/address/TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk">链上核验 · VERIFY ↗</a></div>
+            </div>
+          </div>
+          <p class="warning">仅使用 TRON (TRC-20) 网络发送。<span>Send only on TRON.</span></p>
+        </article>
       </div>
     </section>
 
@@ -93,7 +123,7 @@
     </section>
   </main>
 
-  <footer class="shell"><span>THE $10 WALLET TEST · 2026</span><a href="https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqswll6xuzxwgu76245csdsxkkp0q30tmu3dmqskcvw2qsxq8ggl8fgxygtz7" target="_blank" rel="noreferrer">NOSTR POST ↗</a><a href="https://njump.me/naddr1qvzqqqr4gupzpq4ffufzewsm5smcxtdu0dx4shuts2a05gy5swzsedcnnd5f96r7qyxhwumn8ghj7mn0wvhxcmmvqyt8wumn8ghj7un9d3shjtnswf5k6ctv9ehx2aqqze6x2m3dv3hkcmrpwgkhwctvd3jhgtt5v4ehglcll3r" target="_blank" rel="noreferrer">LONG-FORM STORY ↗</a><a href="https://github.com/mundodr/ten-dollar-wallet-test/discussions/1" target="_blank" rel="noreferrer">DISCUSS ↗</a><a href="https://github.com/mundodr" target="_blank" rel="noreferrer">MICRO-HELP PROFILE ↗</a><span>BUILT IN PUBLIC · 可公开核验</span></footer>
+  <footer class="shell"><span>THE $10 WALLET TEST · 2026</span><a href="https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqs96rgu9wzmu93yxtq97gt7vp77uaetezzm9ztsjaw07fl9za99qcqcpjszd" target="_blank" rel="noreferrer">NETWORK UPDATE ↗</a><a href="https://njump.me/naddr1qvzqqqr4gupzpq4ffufzewsm5smcxtdu0dx4shuts2a05gy5swzsedcnnd5f96r7qyxhwumn8ghj7mn0wvhxcmmvqyt8wumn8ghj7un9d3shjtnswf5k6ctv9ehx2aqqze6x2m3dv3hkcmrpwgkhwctvd3jhgtt5v4ehglcll3r" target="_blank" rel="noreferrer">LONG-FORM STORY ↗</a><a href="https://github.com/mundodr/ten-dollar-wallet-test/discussions/1" target="_blank" rel="noreferrer">DISCUSS ↗</a><a href="https://github.com/mundodr" target="_blank" rel="noreferrer">MICRO-HELP PROFILE ↗</a><span>BUILT IN PUBLIC · 可公开核验</span></footer>
   <script src="app.js" defer></script>
 </body>
 </html>

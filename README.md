@@ -2,9 +2,9 @@
 
 ![The $10 Wallet Test](docs/og.png)
 
-Can tiny gifts from the internet take two empty crypto wallets to a combined **$10**?
+Can tiny gifts across four public blockchain routes reach a combined **$10**?
 
-陌生人的微小善意，能否让两个余额为零的钱包合计达到 **10 美元**？
+陌生人的微小善意，能否让 Solana、BNB Smart Chain、Base 和 TRON 上的公开地址合计达到 **10 美元**？
 
 ## [Open the donation page / 打开募捐页](https://mundodr.github.io/ten-dollar-wallet-test/)
 
@@ -25,6 +25,8 @@ Can tiny gifts from the internet take two empty crypto wallets to a combined **$
 [AgentPact tested Python offer / AgentPact Python 服务报价](https://agentpact.xyz/offers/bdc63356-c56c-45ad-ac6d-ee39fb4dca00)
 
 [Verified Nostr work-offer post / 已验证的 Nostr 任务帖](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspp4mhxue69uhkummn9ekx7mqpzemhxue69uhhyetvv9ujuurjd9kkzmpwdejhgqg0waehxw309ahx7um5wghx6mmdqqsv398c65g7jts505gy06lew7crtm5hdjy23j84yctztkj5g9xpkzq2ghmxm)
+
+[Verified four-network update / 已验证的四网络更新](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqs96rgu9wzmu93yxtq97gt7vp77uaetezzm9ztsjaw07fl9za99qcqcpjszd)
 
 This is an honest public experiment—not a charity, hardship claim, token sale, raffle, or investment. Any transfer is a voluntary personal gift with no goods, services, tax receipt, or financial return promised.
 
@@ -52,13 +54,33 @@ Accepts **BNB**, **USDT**, and **USDC** on BNB Smart Chain (BEP-20) only.
 
 [Verify on BscScan](https://bscscan.com/address/0x4244f335c42ebd82dbd1378a9cb192f582d9ad18)
 
+### Base
+
+Accepts **ETH** and **USDC** on Base only. This uses the same EVM address as BNB Smart Chain.
+
+```text
+0x4244f335c42ebd82dbd1378a9cb192f582d9ad18
+```
+
+[Verify on BaseScan](https://basescan.org/address/0x4244f335c42ebd82dbd1378a9cb192f582d9ad18)
+
+### TRON
+
+Accepts **TRX** and **USDT (TRC-20)** on the TRON network only.
+
+```text
+TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk
+```
+
+[Verify on TRONSCAN](https://tronscan.org/#/address/TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk)
+
 ## Transparency / 透明度
 
-- Starting native balances were verified as zero on 2026-08-27.
-- The public page includes both QR codes and block-explorer links.
-- A scheduled workflow checks both chains every 30 minutes and updates the public snapshot when displayed balances change.
+- Starting balances on all four networks were verified as zero on 2026-08-27.
+- The public page includes QR codes and block-explorer links for every network.
+- A scheduled workflow checks all four networks every 30 minutes and updates the public snapshot when displayed balances change.
 - A registered Superteam Earn agent (`ten-dollar-wallet-agent-harlequin-44`) checks official agent-eligible work; API credentials and claim codes are never published.
-- An AgentPact seller profile publishes small Python automation, code-review, and API-triage offers. AgentPact settles in Base USDC, so any such payment is disclosed separately and is not counted as a Solana/BSC goal-chain deposit.
+- An AgentPact seller profile publishes small Python automation, code-review, and API-triage offers. AgentPact settles in Base USDC; Base is now one of the declared goal networks, so a verified payout to the listed EVM address counts.
 - Bounty attempts must require no deposit, wallet signature, seed phrase, private key, or fabricated identity. Original submissions and payment evidence will be disclosed if work is accepted.
 - Block explorers are always the authoritative record.
 

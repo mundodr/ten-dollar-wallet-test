@@ -9,21 +9,29 @@ let workOffer = null;
 try {
   workOffer = JSON.parse(await readFile(new URL("work-offer-result.json", accountDir), "utf8"));
 } catch {}
+let networkUpdate = null;
+try {
+  networkUpdate = JSON.parse(await readFile(new URL("network-update-result.json", accountDir), "utf8"));
+} catch {}
 const relays = [...new Set([
   ...short.acceptedRelays,
   ...article.acceptedRelays,
   ...introduction.acceptedRelays,
   ...(workOffer?.acceptedRelays ?? []),
+  ...(networkUpdate?.acceptedRelays ?? []),
 ])];
 const articleAddress = `30023:${short.pubkey}:ten-dollar-wallet-test`;
 const pool = new SimplePool({ enableReconnect: false });
 
-const [shortEvents, articleEvents, introductionEvents, workOfferEvents, followers] = await Promise.all([
+const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkUpdateEvents, followers] = await Promise.all([
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [short.eventId] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#a": [articleAddress] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [introduction.eventId] }, { maxWait: 10_000 }),
   workOffer
     ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [workOffer.eventId] }, { maxWait: 10_000 })
+    : [],
+  networkUpdate
+    ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [networkUpdate.eventId] }, { maxWait: 10_000 })
     : [],
   pool.querySync(relays, { kinds: [3], "#p": [short.pubkey] }, { maxWait: 10_000 }),
 ]);
@@ -44,5 +52,6 @@ console.log(JSON.stringify({
   longFormArticle: summarize(articleEvents),
   introductionPost: summarize(introductionEvents),
   workOfferPost: summarize(workOfferEvents),
+  networkUpdatePost: summarize(networkUpdateEvents),
   followerEvents: followers.length,
 }, null, 2));
