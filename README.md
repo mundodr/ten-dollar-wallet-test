@@ -12,6 +12,8 @@ Can tiny gifts from the internet take two empty crypto wallets to a combined **$
 
 [Bilingual long-form Nostr article / 双语 Nostr 长文](https://njump.me/naddr1qvzqqqr4gupzpq4ffufzewsm5smcxtdu0dx4shuts2a05gy5swzsedcnnd5f96r7qyxhwumn8ghj7mn0wvhxcmmvqyt8wumn8ghj7un9d3shjtnswf5k6ctv9ehx2aqqze6x2m3dv3hkcmrpwgkhwctvd3jhgtt5v4ehglcll3r)
 
+[Open campaign discussion / 参与公开讨论](https://github.com/mundodr/ten-dollar-wallet-test/discussions/1)
+
 This is an honest public experiment—not a charity, hardship claim, token sale, raffle, or investment. Any transfer is a voluntary personal gift with no goods, services, tax receipt, or financial return promised.
 
 这是一个公开、真实的小实验，不是慈善项目，不编造困难，也不销售代币或承诺回报。任何转账都是自愿的个人赠与。
