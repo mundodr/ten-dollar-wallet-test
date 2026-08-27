@@ -4,6 +4,8 @@ import path from "node:path";
 const baseUrl = "https://payanagent.com";
 const targetBaseWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const baseUsdc = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const catalogTaskId = "ks76vc9pzpz3qfgf8aawjckn5n8bezhf";
+const catalogBidId = "jd7afj07er0yhgbxm5wcj9e1vd8d9ey7";
 const credentials = JSON.parse(
   await readFile(path.resolve(".payanagent/credentials.json"), "utf8"),
 );
@@ -30,10 +32,11 @@ async function json(route, options = {}) {
   return { response, body: await response.json().catch(() => null) };
 }
 
-const [profile, offer, receipts] = await Promise.all([
+const [profile, offer, receipts, catalogTask] = await Promise.all([
   json(`/api/v1/agents/${encodeURIComponent(credentials.agentId)}`),
   json(`/api/v1/offers/${encodeURIComponent(state.offerId)}`),
   json(`/api/v1/agents/${encodeURIComponent(credentials.agentId)}/receipts?side=seller&limit=100`),
+  json(`/api/v1/requests/${encodeURIComponent(catalogTaskId)}`),
 ]);
 
 const challengeResponse = await fetch(
@@ -76,6 +79,7 @@ const profileWallet = profile.body?.walletAddress ?? profile.body?.wallet_addres
 const profileWalletMatches =
   profileWallet?.toLowerCase() === targetBaseWallet.toLowerCase();
 const offerBody = offer.body?.offer ?? offer.body;
+const catalogBid = (catalogTask.body?.bids ?? []).find((bid) => bid._id === catalogBidId);
 
 console.log(
   JSON.stringify(
@@ -104,10 +108,19 @@ console.log(
         exactTargetTerms: challengeMatches,
       },
       receipts: receipts.body,
+      catalogTaskBid: {
+        requestId: catalogTaskId,
+        requestStatus: catalogTask.body?.request?.status,
+        escrowDepositedCents: catalogTask.body?.request?.escrowDepositedCents,
+        bidId: catalogBidId,
+        bidStatus: catalogBid?.status ?? "not_found",
+        bidPriceCents: catalogBid?.priceCents ?? null,
+      },
       allChecksSucceeded:
         profile.response.ok &&
         offer.response.ok &&
         receipts.response.ok &&
+        catalogTask.response.ok &&
         profileWalletMatches &&
         challengeMatches &&
         endpointHealth.ok,
