@@ -49,4 +49,5 @@ yarn-error.log*
 /.payanagent/
 /.x402jobs/
 /.nohumans/
+/.agentpaystore/
 /profile-mundodr/

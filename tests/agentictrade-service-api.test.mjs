@@ -23,3 +23,18 @@ test("returns Chinese checklist text for a Chinese brief", () => {
 test("rejects an empty brief", () => {
   assert.throws(() => compileAcceptanceCriteria("   "), /non-empty/);
 });
+
+test("accepts an OpenAI-style messages envelope", () => {
+  const result = compileAcceptanceCriteria({
+    messages: [
+      { role: "system", content: "Return a deterministic checklist." },
+      {
+        role: "user",
+        content: "POST /v1/items must reject a missing id with HTTP 400.",
+      },
+    ],
+  });
+
+  assert.match(result.summary, /POST \/v1\/items/);
+  assert.doesNotMatch(result.summary, /"messages"/);
+});

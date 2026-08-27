@@ -4,7 +4,23 @@ import { pathToFileURL } from "node:url";
 const maxBodyBytes = 64 * 1024;
 
 function cleanBrief(value) {
-  const raw = typeof value === "string" ? value : JSON.stringify(value);
+  let normalized = value;
+  if (value && typeof value === "object" && Array.isArray(value.messages)) {
+    const contents = value.messages
+      .map((message) => message?.content)
+      .flatMap((content) => (Array.isArray(content) ? content : [content]))
+      .map((content) =>
+        typeof content === "string"
+          ? content
+          : typeof content?.text === "string"
+            ? content.text
+            : "",
+      )
+      .filter(Boolean);
+    if (contents.length > 0) normalized = contents.join("\n");
+  }
+  const raw =
+    typeof normalized === "string" ? normalized : JSON.stringify(normalized);
   return raw.replace(/\s+/g, " ").trim().slice(0, 20_000);
 }
 
