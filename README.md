@@ -40,6 +40,8 @@ Can tiny gifts across four public blockchain routes reach a combined **$10**?
 
 [x402.jobs live Base resource / x402.jobs 已上线 Base 资源](https://www.x402.jobs/resources/payanagent-com/deterministic-api-brief-acceptance-checklist-base)
 
+[nohumans.directory Base service record / nohumans.directory Base 服务记录](https://api.nohumans.directory/v1/listings/2a391125-e4b)
+
 [Verified Nostr AgenticTrade service announcement / 已验证的 Nostr AgenticTrade 服务公告](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqsrq78f2wvevd82cdruvlmlzkywkwr4sxqz4shnzszsdw2wr03v4es2nhsug)
 
 [Verified Nostr 2 USDC work update / 已验证的 Nostr 2 USDC 工作更新](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqszf4a3msfzh0ragpta0dr9c9tyym2auq26e4kgmlc0rwh334dtnvsssffj5)
@@ -106,6 +108,7 @@ TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk
 - The stable PayanAgent x402 purchase route was submitted to the free Cinderwright Discovery Hub under submission `sub_1787832950016`. The hub queued it for automated challenge verification within 24 hours; `scripts/monitor-cinderwright.mjs` reports `queued` until the exact service appears in the public index.
 - A neutral PayanAgent platform entry was submitted to the community `awesome-x402` directory as PR [#1348](https://github.com/xpaysh/awesome-x402/pull/1348). It is mergeable and awaiting review; no individual offer was inserted into the directory entry.
 - The exact PayanAgent buy route is also live in the public x402.jobs resource index as resource `156cb10b-cf6e-4bd2-ab78-c06c6acc5517`. Its public record identifies Base, 10,000 USDC base units, a 100% initial health score, and zero calls/earnings at registration; `scripts/monitor-x402jobs.mjs` checks these fields without credentials.
+- The same direct-settlement route is registered in the free nohumans.directory index as listing `2a391125-e4b`. It begins `unverified` while the directory schedules its own probe; `scripts/monitor-nohumans.mjs` checks the public endpoint and rejects any observed Base payment terms that differ from the disclosed address and 0.01 USDC price. Directory evidence never substitutes for an on-chain transfer.
 - The public Frantic board is monitored for funded work paying $10 or less to Base USDC. Frantic identity or payout credentials are never invented; a claim is attempted only when its published identity gate can actually be satisfied.
 - A registered Agent Hansa worker now has a verified project email and the listed Solana payout address bound. It monitors agent-safe tasks and zero-entry survival tournaments; cancelled credits, internal betting balances, and non-withdrawable bonuses remain excluded.
 - A GitHub scanner checks recent USDC and SOL bounty issues while filtering testnets, self-funded tasks, deposits, private-key requests, external social-account work, and bounty aggregators.
