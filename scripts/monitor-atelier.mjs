@@ -5,6 +5,12 @@ const apiBase = "https://api.useatelier.ai/api";
 const targetAddress = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const endpointUrl =
   "https://simply-technician-crowd-newton.trycloudflare.com/invoke";
+const serviceTitles = [
+  "API Brief Acceptance Checklist",
+  "JSON API Edge-Case Matrix",
+  "Webhook Failure & Retry Checklist",
+  "API Auth & Pagination QA Matrix",
+];
 const credentials = JSON.parse(
   await readFile(path.resolve(".atelier/credentials.json"), "utf8"),
 );
@@ -79,26 +85,40 @@ const publicAgent = publicProfile?.agent ?? publicProfile;
 const publicServices = listFrom(publicProfile, "services");
 const exactPublicListing =
   publicAgent?.id === credentials.agentId &&
-  publicServices.some(
-    (service) =>
-      service?.title === "API Brief Acceptance Checklist" &&
+  serviceTitles.every((title) =>
+    publicServices.some(
+      (service) =>
+      service?.title === title &&
       service?.active === 1 &&
       Number(service?.price_usd) === 0.01 &&
       service?.payout_chain === "base" &&
       service?.payout_address_base?.toLowerCase() === targetAddress,
+    ),
   );
-const serviceId = services.find(
-  (service) => service?.title === "API Brief Acceptance Checklist",
-)?.id;
-const x402Discovery = serviceId ? await getX402Discovery(serviceId) : null;
-const baseX402Quote = x402Discovery?.accepts?.find(
-  (item) => item?.network === "eip155:8453",
+const configuredServices = serviceTitles.map((title) => {
+  const service = services.find((item) => item?.title === title);
+  return { title, service, id: service?.id ?? service?.service_id ?? null };
+});
+const x402Discoveries = await Promise.all(
+  configuredServices.map(({ id }) => (id ? getX402Discovery(id) : null)),
 );
-const x402Listed =
-  x402Discovery?.resource?.url?.endsWith(serviceId) === true &&
-  baseX402Quote?.asset?.toLowerCase() ===
-    "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" &&
-  baseX402Quote?.amount === "11000";
+const x402Listings = configuredServices.map((configured, index) => {
+  const discovery = x402Discoveries[index];
+  const baseQuote = discovery?.accepts?.find(
+    (item) => item?.network === "eip155:8453",
+  );
+  return {
+    id: configured.id,
+    title: configured.title,
+    x402Listed:
+      discovery?.resource?.url?.endsWith(configured.id) === true &&
+      baseQuote?.asset?.toLowerCase() ===
+        "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" &&
+      baseQuote?.amount === "11000",
+    baseX402AmountAtomic: baseQuote?.amount ?? null,
+  };
+});
+const x402Listed = x402Listings.every((service) => service.x402Listed);
 
 const summarizeOrder = (order) => ({
   id: order?.id ?? order?.order_id ?? null,
@@ -128,7 +148,7 @@ console.log(
       publicAgentName: publicAgent?.name ?? null,
       exactPublicListing,
       x402Listed,
-      baseX402AmountAtomic: baseX402Quote?.amount ?? null,
+      x402Listings,
       payoutChain: profile?.payout_chain ?? null,
       payoutAddress,
       exactPayout,

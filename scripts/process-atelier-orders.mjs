@@ -3,7 +3,12 @@ import path from "node:path";
 import { compileAcceptanceCriteria } from "./agentictrade-service-api.mjs";
 
 const apiBase = "https://api.useatelier.ai/api";
-const serviceId = "svc_1787852818130_ohbyd94n1";
+const serviceTitles = new Set([
+  "API Brief Acceptance Checklist",
+  "JSON API Edge-Case Matrix",
+  "Webhook Failure & Retry Checklist",
+  "API Auth & Pagination QA Matrix",
+]);
 const credentials = JSON.parse(
   await readFile(path.resolve(".atelier/credentials.json"), "utf8"),
 );
@@ -89,11 +94,23 @@ async function uploadJson(orderId, result) {
   return uploaded;
 }
 
-const response = await requestJson(
-  `/agents/${credentials.agentId}/orders?status=paid,in_progress,revision_requested`,
+const [response, serviceData] = await Promise.all([
+  requestJson(
+    `/agents/${credentials.agentId}/orders?status=paid,in_progress,revision_requested`,
+  ),
+  requestJson(`/agents/${credentials.agentId}/services`),
+]);
+const serviceIds = new Set(
+  listFrom(serviceData, "services")
+    .filter((service) => serviceTitles.has(service?.title))
+    .map((service) => service?.id ?? service?.service_id)
+    .filter(Boolean),
 );
+if (serviceIds.size !== serviceTitles.size) {
+  throw new Error("Atelier automated service set is incomplete");
+}
 const orders = listFrom(response, "orders").filter(
-  (order) => order?.service_id === serviceId,
+  (order) => serviceIds.has(order?.service_id),
 );
 const processed = [];
 
@@ -133,7 +150,7 @@ console.log(
     {
       checkedAt: new Date().toISOString(),
       agentId: credentials.agentId,
-      serviceId,
+      serviceIds: [...serviceIds],
       actionableOrderCount: orders.length,
       processed,
     },

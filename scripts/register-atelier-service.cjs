@@ -1,18 +1,74 @@
 const { mkdir, readFile, writeFile, chmod } = require("node:fs/promises");
 const path = require("node:path");
-const { Keypair } = require("@solana/web3.js");
-const nacl = require("tweetnacl");
-const bs58Module = require("bs58");
-const bs58 = bs58Module.default ?? bs58Module;
 
 const apiBase = "https://api.useatelier.ai/api";
 const targetAddress = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const privateDir = path.resolve(".atelier");
 const credentialsPath = path.join(privateDir, "credentials.json");
 const solanaKeypairPath = path.join(privateDir, "owner-solana-keypair.json");
-const serviceTitle = "API Brief Acceptance Checklist";
 const endpointUrl =
   "https://simply-technician-crowd-newton.trycloudflare.com/invoke";
+const serviceDefinitions = [
+  {
+    title: "API Brief Acceptance Checklist",
+    description:
+      "Turns an English or Chinese API feature brief into structured JSON acceptance criteria, assumptions, edge cases, open questions, and six reproducible test scenarios.",
+    briefLabel: "API feature brief",
+    placeholder:
+      "Describe the endpoint, behavior, inputs, outputs, integrations, and constraints.",
+  },
+  {
+    title: "JSON API Edge-Case Matrix",
+    description:
+      "Turns a JSON API contract or behavior brief into six reproducible happy-path, validation, authorization, atomicity, and repeatability test scenarios.",
+    briefLabel: "JSON API contract or behavior brief",
+    placeholder:
+      "Describe the method, route, fields, status codes, authorization, and boundary rules.",
+  },
+  {
+    title: "Webhook Failure & Retry Checklist",
+    description:
+      "Turns a webhook integration brief into structured JSON acceptance criteria covering authentication, retry safety, failure atomicity, and concurrent delivery edge cases.",
+    briefLabel: "Webhook integration brief",
+    placeholder:
+      "Describe delivery, signature verification, retry, idempotency, timeout, and failure behavior.",
+  },
+  {
+    title: "API Auth & Pagination QA Matrix",
+    description:
+      "Turns an authenticated or paginated API brief into structured JSON acceptance criteria and reproducible tests for permissions, boundaries, duplicates, and omissions.",
+    briefLabel: "Authenticated or paginated API brief",
+    placeholder:
+      "Describe roles, credentials, cursor or page behavior, response fields, and error cases.",
+  },
+];
+
+function servicePayload(definition) {
+  return {
+    category: "coding",
+    title: definition.title,
+    description: definition.description,
+    price_usd: "0.01",
+    price_type: "fixed",
+    turnaround_hours: 1,
+    deliverables: ["code", "text"],
+    max_revisions: 1,
+    requirement_fields: [
+      {
+        label: definition.briefLabel,
+        type: "textarea",
+        required: true,
+        placeholder: definition.placeholder,
+      },
+      {
+        label: "Response language",
+        type: "select",
+        required: false,
+        options: ["English", "Chinese", "Bilingual"],
+      },
+    ],
+  };
+}
 
 async function readJsonIfPresent(filePath) {
   try {
@@ -68,6 +124,7 @@ async function getX402Discovery(serviceId) {
 }
 
 async function loadOrCreateOwnerWallet() {
+  const { Keypair } = require("@solana/web3.js");
   await mkdir(privateDir, { recursive: true, mode: 0o700 });
   await chmod(privateDir, 0o700);
   const existing = await readJsonIfPresent(solanaKeypairPath);
@@ -86,6 +143,9 @@ async function loadOrCreateOwnerWallet() {
 }
 
 async function register(wallet) {
+  const nacl = require("tweetnacl");
+  const bs58Module = require("bs58");
+  const bs58 = bs58Module.default ?? bs58Module;
   const ownerAddress = wallet.publicKey.toBase58();
   const timestamp = Date.now();
   const message = `atelier:${ownerAddress}:${timestamp}`;
@@ -129,6 +189,27 @@ async function register(wallet) {
   return credentials;
 }
 
+function base58Encode(bytes) {
+  const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  let leadingZeros = 0;
+  while (leadingZeros < bytes.length && bytes[leadingZeros] === 0) leadingZeros += 1;
+  let value = BigInt(`0x${Buffer.from(bytes).toString("hex") || "0"}`);
+  let encoded = "";
+  while (value > 0n) {
+    encoded = alphabet[Number(value % 58n)] + encoded;
+    value /= 58n;
+  }
+  return "1".repeat(leadingZeros) + encoded;
+}
+
+async function savedOwnerAddress() {
+  const saved = await readJsonIfPresent(solanaKeypairPath);
+  if (!Array.isArray(saved?.secretKey) || saved.secretKey.length !== 64) {
+    throw new Error("Saved Atelier owner keypair is missing or invalid");
+  }
+  return base58Encode(saved.secretKey.slice(32));
+}
+
 function listFrom(data, key) {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.[key])) return data[key];
@@ -137,10 +218,13 @@ function listFrom(data, key) {
 }
 
 async function main() {
-const wallet = await loadOrCreateOwnerWallet();
 let credentials = await readJsonIfPresent(credentialsPath);
-if (!credentials) credentials = await register(wallet);
-if (credentials.ownerAddress !== wallet.publicKey.toBase58()) {
+if (!credentials) {
+  const wallet = await loadOrCreateOwnerWallet();
+  credentials = await register(wallet);
+}
+const ownerAddress = await savedOwnerAddress();
+if (credentials.ownerAddress !== ownerAddress) {
   throw new Error("Saved Atelier credentials do not match the encrypted owner wallet");
 }
 
@@ -159,102 +243,76 @@ let services = listFrom(
   await requestJson(`/agents/${credentials.agentId}/services`, { headers: authHeaders }),
   "services",
 );
-let service = services.find((item) => item?.title === serviceTitle);
-if (!service) {
-  service = await requestJson(`/agents/${credentials.agentId}/services`, {
-    method: "POST",
+for (const definition of serviceDefinitions) {
+  let service = services.find((item) => item?.title === definition.title);
+  if (!service) {
+    service = await requestJson(`/agents/${credentials.agentId}/services`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify(servicePayload(definition)),
+    });
+    services.push(service);
+  }
+  const configuredServiceId = service?.id ?? service?.service_id;
+  if (!configuredServiceId) throw new Error(`Atelier service ${definition.title} has no ID`);
+  await requestJson(`/services/${configuredServiceId}`, {
+    method: "PATCH",
     headers: authHeaders,
-    body: JSON.stringify({
-      category: "coding",
-      title: serviceTitle,
-      description:
-        "Turns an English or Chinese API feature brief into structured JSON acceptance criteria, assumptions, edge cases, open questions, and six reproducible test scenarios.",
-      price_usd: "0.01",
-      price_type: "fixed",
-      turnaround_hours: 1,
-      deliverables: ["code", "text"],
-      max_revisions: 1,
-      requirement_fields: [
-        {
-          label: "API feature brief",
-          type: "textarea",
-          required: true,
-          placeholder:
-            "Describe the endpoint, behavior, inputs, outputs, integrations, and constraints.",
-        },
-        {
-          label: "Response language",
-          type: "select",
-          required: false,
-          options: ["English", "Chinese", "Bilingual"],
-        },
-      ],
-    }),
+    body: JSON.stringify(servicePayload(definition)),
   });
 }
 
-const configuredServiceId = service?.id ?? service?.service_id;
-if (!configuredServiceId) throw new Error("Atelier service has no ID");
-service = await requestJson(`/services/${configuredServiceId}`, {
-  method: "PATCH",
-  headers: authHeaders,
-  body: JSON.stringify({
-    category: "coding",
-    title: serviceTitle,
-    description:
-      "Turns an English or Chinese API feature brief into structured JSON acceptance criteria, assumptions, edge cases, open questions, and six reproducible test scenarios.",
-    price_usd: "0.01",
-    price_type: "fixed",
-    turnaround_hours: 1,
-    deliverables: ["code", "text"],
-    max_revisions: 1,
-    requirement_fields: [
-      {
-        label: "API feature brief",
-        type: "textarea",
-        required: true,
-        placeholder:
-          "Describe the endpoint, behavior, inputs, outputs, integrations, and constraints.",
-      },
-      {
-        label: "Response language",
-        type: "select",
-        required: false,
-        options: ["English", "Chinese", "Bilingual"],
-      },
-    ],
-  }),
-});
-
-const [profile, refreshedServices, x402Discovery] = await Promise.all([
+const [profile, refreshedServices] = await Promise.all([
   requestJson("/agents/me", { headers: authHeaders }),
   requestJson(`/agents/${credentials.agentId}/services`, { headers: authHeaders }),
-  getX402Discovery(configuredServiceId),
 ]);
 services = listFrom(refreshedServices, "services");
-service = services.find((item) => item?.title === serviceTitle) ?? service;
 const profilePayout =
   profile?.payout_address_base ?? profile?.payout_wallet ?? profile?.payout_address ?? null;
 const exactPayout =
   typeof profilePayout === "string" &&
   profilePayout.toLowerCase() === targetAddress.toLowerCase() &&
   profile?.payout_chain === "base";
-const exactService =
-  service?.title === serviceTitle &&
-  service?.category === "coding" &&
-  Number(service?.price_usd) === 0.01 &&
-  service?.price_type === "fixed" &&
-  service?.active !== 0 &&
-  service?.active !== false;
-const serviceId = service?.id ?? service?.service_id ?? null;
-const baseX402Quote = x402Discovery?.accepts?.find(
-  (item) => item?.network === "eip155:8453",
+const configuredServices = serviceDefinitions.map((definition) => {
+  const service = services.find((item) => item?.title === definition.title);
+  const id = service?.id ?? service?.service_id ?? null;
+  const exact =
+    service?.category === "coding" &&
+    service?.description === definition.description &&
+    Number(service?.price_usd) === 0.01 &&
+    service?.price_type === "fixed" &&
+    service?.active !== 0 &&
+    service?.active !== false;
+  return { definition, service, id, exact };
+});
+const x402Discoveries = await Promise.all(
+  configuredServices.map(({ id }) => {
+    if (!id) throw new Error("Atelier configured service has no ID");
+    return getX402Discovery(id);
+  }),
 );
-const x402Listed =
-  x402Discovery?.resource?.url?.endsWith(serviceId) === true &&
-  baseX402Quote?.asset?.toLowerCase() ===
-    "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" &&
-  baseX402Quote?.amount === "11000";
+const serviceChecks = configuredServices.map((configured, index) => {
+  const discovery = x402Discoveries[index];
+  const baseQuote = discovery?.accepts?.find(
+    (item) => item?.network === "eip155:8453",
+  );
+  const x402Listed =
+    discovery?.resource?.url?.endsWith(configured.id) === true &&
+    baseQuote?.asset?.toLowerCase() ===
+      "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" &&
+    baseQuote?.amount === "11000";
+  return {
+    id: configured.id,
+    title: configured.service?.title ?? null,
+    priceUsd: configured.service?.price_usd ?? null,
+    exactService: configured.exact,
+    x402Listed,
+    baseX402AmountAtomic: baseQuote?.amount ?? null,
+  };
+});
+const exactServices = serviceChecks.every(
+  (service) => service.exactService && service.x402Listed,
+);
 
 console.log(
   JSON.stringify(
@@ -262,7 +320,7 @@ console.log(
       checkedAt: new Date().toISOString(),
       agentId: credentials.agentId,
       slug: credentials.slug ?? profile?.slug ?? null,
-      ownerAddress: wallet.publicKey.toBase58(),
+      ownerAddress,
       marketable: profile?.marketable ?? null,
       verified: profile?.verified ?? null,
       endpointUrl: profile?.endpoint_url ?? null,
@@ -270,12 +328,7 @@ console.log(
       payoutChain: profile?.payout_chain ?? null,
       payoutAddress: profilePayout,
       exactPayout,
-      serviceId,
-      serviceTitle: service?.title ?? null,
-      servicePriceUsd: service?.price_usd ?? null,
-      exactService,
-      x402Listed,
-      baseX402AmountAtomic: baseX402Quote?.amount ?? null,
+      services: serviceChecks,
       publicAgentUrl: credentials.slug
         ? `https://app.useatelier.ai/agents/${credentials.slug}`
         : null,
@@ -287,9 +340,7 @@ console.log(
 
 if (
   !exactPayout ||
-  !exactService ||
-  !serviceId ||
-  !x402Listed ||
+  !exactServices ||
   profile?.endpoint_url !== endpointUrl
 ) {
   throw new Error("Atelier profile or service does not match the intended terms");
