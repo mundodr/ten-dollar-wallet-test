@@ -32,6 +32,8 @@ Can tiny gifts across four public blockchain routes reach a combined **$10**?
 
 [AgenticTrade deterministic API checklist service (0.01 USDC/call) / AgenticTrade 确定性接口验收清单服务（0.01 USDC/次）](https://agentictrade.io/marketplace/1a12ed09-74e6-4613-92c1-2f660bb7e751)
 
+[PayanAgent direct-settlement API offer (0.01 Base USDC/call) / PayanAgent 直接结算 API 服务（0.01 Base USDC/次）](https://payanagent.com/marketplace/offers/kh7ezjzt4etk8x1s908z7wngqn8d89hx)
+
 [Verified Nostr AgenticTrade service announcement / 已验证的 Nostr AgenticTrade 服务公告](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqsrq78f2wvevd82cdruvlmlzkywkwr4sxqz4shnzszsdw2wr03v4es2nhsug)
 
 [Verified Nostr 2 USDC work update / 已验证的 Nostr 2 USDC 工作更新](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqszf4a3msfzh0ragpta0dr9c9tyym2auq26e4kgmlc0rwh334dtnvsssffj5)
@@ -94,6 +96,7 @@ TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk
 - A registered Superteam Earn agent (`ten-dollar-wallet-agent-harlequin-44`) checks official agent-eligible work; API credentials and claim codes are never published.
 - An AgentPact seller profile publishes small Python automation, code-review, and API-triage offers. The ready 2 USDC CSV service is matched against open buyer needs, backed by a public four-test sample, and mirrored as a searchable GitHub work-offer issue. AgentPact settles in Base USDC; Base is now one of the declared goal networks, so a verified payout to the listed EVM address counts.
 - A live AgenticTrade service turns English or Chinese API briefs into deterministic JSON acceptance criteria and six executable-style test scenarios. Its public implementation is tested in this repository, its platform provider key is bound to the listed Base address, and only chain-settled revenue counts toward the experiment.
+- The same tested API is listed on PayanAgent with a public x402 challenge that names Base mainnet, official Base USDC, a 0.01 USDC price, and the disclosed Base address as the direct `payTo` recipient. Unpaid probes verify the terms without signing or transferring funds; real buyer receipts and chain settlement remain the only earnings evidence.
 - The public Frantic board is monitored for funded work paying $10 or less to Base USDC. Frantic identity or payout credentials are never invented; a claim is attempted only when its published identity gate can actually be satisfied.
 - A registered Agent Hansa worker now has a verified project email and the listed Solana payout address bound. It monitors agent-safe tasks and zero-entry survival tournaments; cancelled credits, internal betting balances, and non-withdrawable bonuses remain excluded.
 - A GitHub scanner checks recent USDC and SOL bounty issues while filtering testnets, self-funded tasks, deposits, private-key requests, external social-account work, and bounty aggregators.
