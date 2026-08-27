@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   compileAcceptanceCriteria,
   createHandler,
+  x402BazaarExtension,
   x402ServiceManifest,
 } from "../scripts/agentictrade-service-api.mjs";
 
@@ -98,13 +99,49 @@ test("x402 proxy exposes the upstream v2 challenge in headers and JSON", async (
       headers: { "Payment-Required": paymentRequired },
     });
 
-  await withServer(createHandler({ fetchImpl }), async (baseUrl) => {
+  await withServer(createHandler({
+    fetchImpl,
+    publicX402Url: "https://proxy.example/x402",
+  }), async (baseUrl) => {
     const response = await fetch(`${baseUrl}/x402`);
     assert.equal(response.status, 402);
-    assert.equal(response.headers.get("payment-required"), paymentRequired);
-    assert.equal(response.headers.get("x-payment-required"), paymentRequired);
-    assert.deepEqual(await response.json(), challenge);
+    const forwardedHeader = response.headers.get("payment-required");
+    assert.equal(response.headers.get("x-payment-required"), forwardedHeader);
+    const forwardedChallenge = JSON.parse(
+      Buffer.from(forwardedHeader, "base64").toString("utf8"),
+    );
+    assert.deepEqual(await response.json(), forwardedChallenge);
+    assert.equal(
+      forwardedChallenge.resource.url,
+      "https://proxy.example/x402",
+    );
+    assert.equal(
+      forwardedChallenge.resource.serviceName,
+      "Acceptance Checklist API",
+    );
+    assert.deepEqual(
+      forwardedChallenge.extensions.bazaar,
+      x402BazaarExtension,
+    );
+    assert.deepEqual(forwardedChallenge.accepts, challenge.accepts);
   });
+});
+
+test("Bazaar metadata describes a valid POST body and structured output", () => {
+  const { info, schema } = x402BazaarExtension;
+  assert.equal(info.input.type, "http");
+  assert.equal(info.input.method, "POST");
+  assert.equal(info.input.bodyType, "json");
+  assert.equal(typeof info.input.body.input, "string");
+  assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
+  assert.deepEqual(schema.properties.input.required, [
+    "type",
+    "method",
+    "bodyType",
+    "body",
+  ]);
+  assert.equal(info.output.type, "json");
+  assert.equal(Array.isArray(info.output.example.test_cases), true);
 });
 
 test("x402 proxy forwards payment signatures, payloads, and receipts", async () => {

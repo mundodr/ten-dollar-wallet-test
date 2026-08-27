@@ -7,6 +7,93 @@ import { pathToFileURL } from "node:url";
 const maxBodyBytes = 64 * 1024;
 const defaultPayanX402Url =
   "https://payanagent.com/x402/kh7ezjzt4etk8x1s908z7wngqn8d89hx";
+const defaultPublicX402Url =
+  "https://simply-technician-crowd-newton.trycloudflare.com/x402";
+
+export const x402BazaarExtension = {
+  info: {
+    input: {
+      type: "http",
+      method: "POST",
+      bodyType: "json",
+      body: {
+        input:
+          "POST /v1/orders requires bearer auth, returns HTTP 201, and retries must be idempotent.",
+      },
+    },
+    output: {
+      type: "json",
+      format: "Structured API acceptance criteria and test cases",
+      example: {
+        summary:
+          "Verifiable API acceptance checklist for: POST /v1/orders requires bearer auth.",
+        assumptions: [],
+        acceptance_criteria: [
+          {
+            id: "AC-1",
+            requirement:
+              "For contract-valid input, POST /v1/orders succeeds and returns a parseable response.",
+            verification:
+              "Assert with an isolated request and observable response or state.",
+          },
+        ],
+        test_cases: [
+          {
+            id: "TC-1",
+            type: "happy_path",
+            setup: "Prepare the smallest contract-valid input.",
+            action: "Call POST /v1/orders.",
+            expected:
+              "Request succeeds; response parses and satisfies every declared field constraint.",
+          },
+        ],
+        edge_cases: ["Empty and whitespace-only input"],
+        open_questions: [],
+      },
+    },
+  },
+  schema: {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    properties: {
+      input: {
+        type: "object",
+        properties: {
+          type: { type: "string", const: "http" },
+          method: { type: "string", enum: ["POST"] },
+          bodyType: { type: "string", enum: ["json"] },
+          body: {
+            type: "object",
+            properties: {
+              input: {
+                type: "string",
+                minLength: 1,
+                description:
+                  "English or Chinese API feature brief, contract, or bug report.",
+              },
+            },
+            required: ["input"],
+            additionalProperties: false,
+          },
+        },
+        required: ["type", "method", "bodyType", "body"],
+        additionalProperties: false,
+      },
+      output: {
+        type: "object",
+        properties: {
+          type: { type: "string", const: "json" },
+          format: { type: "string" },
+          example: { type: "object" },
+        },
+        required: ["type", "example"],
+        additionalProperties: false,
+      },
+    },
+    required: ["input", "output"],
+    additionalProperties: false,
+  },
+};
 
 export const x402ServiceManifest = {
   x402: "1.0",
@@ -194,6 +281,25 @@ function decodePaymentRequired(value) {
   }
 }
 
+function addBazaarMetadata(challenge, publicX402Url) {
+  return {
+    ...challenge,
+    resource: {
+      ...challenge.resource,
+      url: publicX402Url,
+      description:
+        "Turn an English or Chinese API brief into deterministic JSON acceptance criteria, assumptions, edge cases, open questions, and six test cases.",
+      mimeType: "application/json",
+      serviceName: "Acceptance Checklist API",
+      tags: ["api", "testing", "qa", "json", "bilingual"],
+    },
+    extensions: {
+      ...challenge.extensions,
+      bazaar: x402BazaarExtension,
+    },
+  };
+}
+
 function safeEqualText(left, right) {
   const leftBuffer = Buffer.from(left);
   const rightBuffer = Buffer.from(right);
@@ -266,7 +372,7 @@ async function receiveAgentPactWebhook(
 async function proxyPayanX402(
   request,
   response,
-  { fetchImpl, payanX402Url },
+  { fetchImpl, payanX402Url, publicX402Url },
 ) {
   let rawBody = null;
   try {
@@ -304,27 +410,41 @@ async function proxyPayanX402(
   }
 
   const upstreamBody = Buffer.from(await upstream.arrayBuffer());
-  const paymentRequired =
+  let paymentRequired =
     upstream.headers.get("payment-required") ??
     upstream.headers.get("x-payment-required");
   const paymentResponse =
     upstream.headers.get("payment-response") ??
     upstream.headers.get("x-payment-response");
+  const extensionResponses = upstream.headers.get("extension-responses");
   const responseHeaders = {};
-  if (paymentRequired) {
-    responseHeaders["Payment-Required"] = paymentRequired;
-    responseHeaders["X-Payment-Required"] = paymentRequired;
-  }
   if (paymentResponse) {
     responseHeaders["Payment-Response"] = paymentResponse;
     responseHeaders["X-Payment-Response"] = paymentResponse;
+  }
+  if (extensionResponses) {
+    responseHeaders["Extension-Responses"] = extensionResponses;
   }
 
   if (upstream.status === 402) {
     const challenge = decodePaymentRequired(paymentRequired);
     if (challenge) {
-      return sendJson(response, 402, challenge, responseHeaders);
+      const discoverableChallenge = addBazaarMetadata(
+        challenge,
+        publicX402Url,
+      );
+      paymentRequired = Buffer.from(
+        JSON.stringify(discoverableChallenge),
+      ).toString("base64");
+      responseHeaders["Payment-Required"] = paymentRequired;
+      responseHeaders["X-Payment-Required"] = paymentRequired;
+      return sendJson(response, 402, discoverableChallenge, responseHeaders);
     }
+  }
+
+  if (paymentRequired) {
+    responseHeaders["Payment-Required"] = paymentRequired;
+    responseHeaders["X-Payment-Required"] = paymentRequired;
   }
 
   response.writeHead(upstream.status, {
@@ -341,6 +461,7 @@ async function proxyPayanX402(
 export function createHandler({
   fetchImpl = fetch,
   payanX402Url = defaultPayanX402Url,
+  publicX402Url = defaultPublicX402Url,
   agentPactWebhookSecret = null,
   recordAgentPactWebhook = null,
 } = {}) {
@@ -359,7 +480,11 @@ export function createHandler({
       pathname === "/x402" &&
       (request.method === "GET" || request.method === "POST")
     ) {
-      return proxyPayanX402(request, response, { fetchImpl, payanX402Url });
+      return proxyPayanX402(request, response, {
+        fetchImpl,
+        payanX402Url,
+        publicX402Url,
+      });
     }
     if (pathname === "/agentpact/webhook") {
       if (request.method !== "POST") {
