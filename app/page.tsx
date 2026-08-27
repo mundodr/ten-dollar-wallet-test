@@ -1,0 +1,199 @@
+"use client";
+
+import { useState } from "react";
+
+const SOL_ADDRESS = "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt";
+const BNB_ADDRESS = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
+
+type WalletCardProps = {
+  id: "solana" | "bnb";
+  network: string;
+  networkCn: string;
+  address: string;
+  qr: string;
+  explorer: string;
+  assets: string;
+  accent: string;
+};
+
+function WalletCard({
+  id,
+  network,
+  networkCn,
+  address,
+  qr,
+  explorer,
+  assets,
+  accent,
+}: WalletCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyAddress() {
+    await navigator.clipboard.writeText(address);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  return (
+    <article className="wallet-card" style={{ "--accent": accent } as React.CSSProperties}>
+      <div className="wallet-card__top">
+        <div>
+          <span className="network-kicker">{networkCn}</span>
+          <h3>{network}</h3>
+        </div>
+        <span className="status-dot"><i /> LIVE</span>
+      </div>
+
+      <div className="wallet-card__body">
+        <div className="qr-shell">
+          <img src={qr} alt={`${network} donation address QR code`} />
+        </div>
+        <div className="wallet-details">
+          <p className="asset-line">可接收 / ACCEPTS</p>
+          <p className="assets">{assets}</p>
+          <p className="address-label">钱包地址 / WALLET ADDRESS</p>
+          <code>{address}</code>
+          <div className="wallet-actions">
+            <button type="button" onClick={copyAddress} aria-live="polite">
+              {copied ? "已复制 · COPIED" : "复制地址 · COPY"}
+            </button>
+            <a href={explorer} target="_blank" rel="noreferrer">
+              链上核验 · VERIFY ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <p className="network-warning">
+        仅使用 {id === "solana" ? "Solana" : "BNB Smart Chain (BEP-20)"} 网络发送。
+        <span> Send only on the named network.</span>
+      </p>
+    </article>
+  );
+}
+
+export default function Home() {
+  return (
+    <main>
+      <nav className="nav shell" aria-label="Main navigation">
+        <a className="wordmark" href="#top" aria-label="The ten dollar wallet test home">
+          <span>10</span> / TEN
+        </a>
+        <a className="ledger-link" href="#wallets">
+          <i /> 公开账本 · PUBLIC LEDGER
+        </a>
+      </nav>
+
+      <section className="hero shell" id="top">
+        <div className="hero-copy">
+          <p className="eyebrow">一个人与 AI 的公开实验 · A PERSON + AN AI</p>
+          <h1>
+            把两个空钱包
+            <br />
+            带到 <em>$10</em>
+          </h1>
+          <p className="lead-cn">
+            这不是慈善，也没有编造困难。我们只是诚实地问：陌生人的微小善意，能否让两个余额为零的钱包合计达到 10 美元？
+          </p>
+          <p className="lead-en">
+            No hardship story. No token sale. Just one honest question: can tiny gifts from the internet take two empty wallets to a combined $10?
+          </p>
+          <div className="hero-actions">
+            <a className="primary-button" href="#wallets">选择网络 · CHOOSE A NETWORK ↓</a>
+            <span>任意金额都有帮助 · Any amount counts</span>
+          </div>
+        </div>
+
+        <aside className="target-card" aria-label="Donation progress: zero of ten dollars">
+          <div className="target-card__header">
+            <span>目标 / TARGET</span>
+            <span className="verified">链上可查 · ON-CHAIN</span>
+          </div>
+          <div className="amount-row">
+            <strong>$0.00</strong>
+            <span>/ $10.00</span>
+          </div>
+          <div className="progress-track" aria-hidden="true"><span /></div>
+          <div className="progress-meta">
+            <span>0% FUNDED</span>
+            <span>$10.00 TO GO</span>
+          </div>
+          <div className="starting-balances">
+            <p><span>SOL</span><b>0.000000</b></p>
+            <p><span>BNB</span><b>0.000000</b></p>
+            <p><span>SOLANA USDC</span><b>0.00</b></p>
+          </div>
+          <p className="timestamp">起始余额核验于 2026-08-27 17:06 CST</p>
+        </aside>
+      </section>
+
+      <section className="marquee" aria-label="Campaign principles">
+        <div>
+          <span>NO TRAGEDY STORY</span><i>◆</i>
+          <span>NO TOKEN SALE</span><i>◆</i>
+          <span>NO RETURNS PROMISED</span><i>◆</i>
+          <span>JUST A $10 EXPERIMENT</span><i>◆</i>
+        </div>
+      </section>
+
+      <section className="wallets shell" id="wallets">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">02 / DIRECT TO WALLET</p>
+            <h2>选择一条链，送出一点点。</h2>
+          </div>
+          <p>Choose one network. Your gift goes directly to the listed wallet—no middleman and no platform checkout.</p>
+        </div>
+
+        <div className="wallet-grid">
+          <WalletCard
+            id="solana"
+            network="SOLANA"
+            networkCn="低手续费 · LOW FEE"
+            address={SOL_ADDRESS}
+            qr="/solana-qr.png"
+            explorer={`https://solscan.io/account/${SOL_ADDRESS}`}
+            assets="SOL · USDC (SPL)"
+            accent="#6bf6c7"
+          />
+          <WalletCard
+            id="bnb"
+            network="BNB SMART CHAIN"
+            networkCn="BEP-20 网络 · NETWORK"
+            address={BNB_ADDRESS}
+            qr="/bnb-qr.png"
+            explorer={`https://bscscan.com/address/${BNB_ADDRESS}`}
+            assets="BNB · USDT · USDC (BEP-20)"
+            accent="#f4ba2a"
+          />
+        </div>
+      </section>
+
+      <section className="rules shell">
+        <div className="rules-title">
+          <p className="eyebrow">03 / THE FINE PRINT</p>
+          <h2>清楚、简单、没有套路。</h2>
+          <p>Clear, simple, and deliberately un-dramatic.</p>
+        </div>
+        <ol>
+          <li><span>01</span><div><h3>完全自愿 · VOLUNTARY</h3><p>不提供商品、服务、抽奖资格或回报。No purchase, reward, raffle entry, or financial return.</p></div></li>
+          <li><span>02</span><div><h3>不可逆 · FINAL</h3><p>链上转账通常无法撤回；发送前请再次核对网络和地址。Crypto transfers are generally irreversible—check twice.</p></div></li>
+          <li><span>03</span><div><h3>公开可查 · VERIFIABLE</h3><p>两个地址和起始余额公开展示，任何人都能在区块浏览器核验。Both wallets and their starting balances are public.</p></div></li>
+          <li><span>04</span><div><h3>不是慈善 · NOT A CHARITY</h3><p>这是给页面创建者的个人赠与，不开具抵税凭证。This is a personal gift to the page creator, not a tax-deductible donation.</p></div></li>
+        </ol>
+      </section>
+
+      <section className="closing shell">
+        <p className="eyebrow">THE ASK, IN ONE LINE</p>
+        <h2>如果这个诚实的小实验让你会心一笑，送一美元，或更少。</h2>
+        <p>If this honest little experiment made you smile, send a dollar—or less.</p>
+        <a className="primary-button" href="#wallets">查看钱包 · VIEW WALLETS ↑</a>
+      </section>
+
+      <footer className="shell">
+        <span>THE $10 WALLET TEST · 2026</span>
+        <span>BUILT IN PUBLIC · 可公开核验</span>
+      </footer>
+    </main>
+  );
+}
