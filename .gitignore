@@ -50,4 +50,5 @@ yarn-error.log*
 /.x402jobs/
 /.nohumans/
 /.agentpaystore/
+/.archtools/
 /profile-mundodr/
