@@ -60,12 +60,12 @@ const trackedItems = [
   {
     taskId:
       "0xace815c521a866aee6b474ed379160e73a933552b01c990b36b8937b88f3295a",
-    submissionId: "e192ee7e-d9b2-42cd-9b37-15ea2b1a895c",
-    submittedAt: "2026-08-27T19:06:07.967Z",
+    submissionId: "daa17e53-320b-43cf-9435-6b7ce606c2ba",
+    submittedAt: "2026-08-27T20:14:55.360Z",
     deliverableHash:
-      "0x6d4f00b1cf454e06f4f133b78e9a7473599cd06c146c6f39f65a33b4b7f27180",
+      "0x6a77b89a1e6b59625d679a060c84253841b641c7bc1e7ad784ac961c76a935ff",
     submitTxHash:
-      "0x0247530a08c1dccafa7f5004b7f7f1807379942f5c889930a115e4f5dbe699be",
+      "0xb5a1bf09a8a51dfb7992f02c47ff0e69b5ebd6ce2333f8b5167161a805283a55",
   },
   {
     taskId:
