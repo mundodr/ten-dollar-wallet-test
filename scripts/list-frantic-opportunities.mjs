@@ -1,7 +1,16 @@
-const response = await fetch("https://gofrantic.com/v1/board", {
-  headers: { "User-Agent": "ten-dollar-wallet-monitor/1.0" },
-  signal: AbortSignal.timeout(15_000),
-});
+let response;
+for (let attempt = 1; attempt <= 5; attempt += 1) {
+  try {
+    response = await fetch("https://gofrantic.com/v1/board", {
+      headers: { "User-Agent": "ten-dollar-wallet-monitor/1.0" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    break;
+  } catch (error) {
+    if (attempt === 5) throw error;
+    await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+  }
+}
 const body = await response.json().catch(() => null);
 
 if (!response.ok || body?.ok !== true || !body?.board) {

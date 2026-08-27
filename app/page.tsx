@@ -260,6 +260,9 @@ export default function Home() {
 
       <footer className="shell">
         <span>THE $10 WALLET TEST · 2026</span>
+        <a href="https://github.com/mundodr/ten-dollar-wallet-test/issues/2" target="_blank" rel="noreferrer">
+          2 USDC WORK OFFER ↗
+        </a>
         <span>BUILT IN PUBLIC · 可公开核验</span>
       </footer>
     </main>

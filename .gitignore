@@ -43,4 +43,5 @@ yarn-error.log*
 /.nostr/
 /.superteam/
 /.agentpact/
+/.agenthansa/
 /profile-mundodr/
