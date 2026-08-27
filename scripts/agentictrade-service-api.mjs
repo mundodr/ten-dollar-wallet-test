@@ -2,6 +2,8 @@ import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 
 const maxBodyBytes = 64 * 1024;
+const defaultPayanX402Url =
+  "https://payanagent.com/x402/kh7ezjzt4etk8x1s908z7wngqn8d89hx";
 
 export const x402ServiceManifest = {
   x402: "1.0",
@@ -152,18 +154,122 @@ export function compileAcceptanceCriteria(value) {
   };
 }
 
-function sendJson(response, status, body) {
+function sendJson(response, status, body, headers = {}) {
   const encoded = JSON.stringify(body);
   response.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(encoded),
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
+    ...headers,
   });
   response.end(encoded);
 }
 
-export function createHandler() {
+async function readRequestBody(request) {
+  let size = 0;
+  const chunks = [];
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > maxBodyBytes) {
+      const error = new Error("payload_too_large");
+      error.statusCode = 413;
+      throw error;
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+function decodePaymentRequired(value) {
+  if (!value) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(value, "base64").toString("utf8"));
+    return Array.isArray(decoded?.accepts) ? decoded : null;
+  } catch {
+    return null;
+  }
+}
+
+async function proxyPayanX402(
+  request,
+  response,
+  { fetchImpl, payanX402Url },
+) {
+  let rawBody = null;
+  try {
+    if (request.method === "POST") rawBody = await readRequestBody(request);
+  } catch (error) {
+    return sendJson(response, error.statusCode ?? 400, {
+      error: error.message,
+    });
+  }
+
+  const headers = { Accept: "application/json" };
+  if (rawBody?.length) {
+    headers["Content-Type"] =
+      request.headers["content-type"] ?? "application/json";
+  }
+  for (const name of [
+    "payment-signature",
+    "x-payment",
+    "x-payment-signature",
+  ]) {
+    const value = request.headers[name];
+    if (typeof value === "string" && value) headers[name] = value;
+  }
+
+  let upstream;
+  try {
+    upstream = await fetchImpl(payanX402Url, {
+      method: request.method,
+      headers,
+      ...(rawBody?.length ? { body: rawBody } : {}),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch {
+    return sendJson(response, 502, { error: "payment_route_unavailable" });
+  }
+
+  const upstreamBody = Buffer.from(await upstream.arrayBuffer());
+  const paymentRequired =
+    upstream.headers.get("payment-required") ??
+    upstream.headers.get("x-payment-required");
+  const paymentResponse =
+    upstream.headers.get("payment-response") ??
+    upstream.headers.get("x-payment-response");
+  const responseHeaders = {};
+  if (paymentRequired) {
+    responseHeaders["Payment-Required"] = paymentRequired;
+    responseHeaders["X-Payment-Required"] = paymentRequired;
+  }
+  if (paymentResponse) {
+    responseHeaders["Payment-Response"] = paymentResponse;
+    responseHeaders["X-Payment-Response"] = paymentResponse;
+  }
+
+  if (upstream.status === 402) {
+    const challenge = decodePaymentRequired(paymentRequired);
+    if (challenge) {
+      return sendJson(response, 402, challenge, responseHeaders);
+    }
+  }
+
+  response.writeHead(upstream.status, {
+    "Content-Type":
+      upstream.headers.get("content-type") ?? "application/json; charset=utf-8",
+    "Content-Length": upstreamBody.length,
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    ...responseHeaders,
+  });
+  return response.end(upstreamBody);
+}
+
+export function createHandler({
+  fetchImpl = fetch,
+  payanX402Url = defaultPayanX402Url,
+} = {}) {
   return async (request, response) => {
     const pathname = new URL(request.url, "http://localhost").pathname;
     if (request.method === "GET" && pathname === "/health") {
@@ -174,6 +280,12 @@ export function createHandler() {
       pathname === "/.well-known/x402-service.json"
     ) {
       return sendJson(response, 200, x402ServiceManifest);
+    }
+    if (
+      pathname === "/x402" &&
+      (request.method === "GET" || request.method === "POST")
+    ) {
+      return proxyPayanX402(request, response, { fetchImpl, payanX402Url });
     }
     if (request.method === "GET") {
       return sendJson(response, 200, {
@@ -189,15 +301,8 @@ export function createHandler() {
     }
     if (request.method !== "POST") return sendJson(response, 405, { error: "method_not_allowed" });
 
-    let size = 0;
-    const chunks = [];
-    for await (const chunk of request) {
-      size += chunk.length;
-      if (size > maxBodyBytes) return sendJson(response, 413, { error: "payload_too_large" });
-      chunks.push(chunk);
-    }
     try {
-      const raw = Buffer.concat(chunks).toString("utf8");
+      const raw = (await readRequestBody(request)).toString("utf8");
       const contentType = request.headers["content-type"] ?? "";
       const body = contentType.includes("application/json") ? JSON.parse(raw || "{}") : { input: raw };
       return sendJson(
@@ -213,7 +318,10 @@ export function createHandler() {
         ),
       );
     } catch (error) {
-      return sendJson(response, 400, { error: "invalid_input", message: error.message });
+      return sendJson(response, error.statusCode ?? 400, {
+        error: error.statusCode === 413 ? "payload_too_large" : "invalid_input",
+        message: error.message,
+      });
     }
   };
 }
