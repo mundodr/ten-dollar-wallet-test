@@ -3,6 +3,20 @@ import { pathToFileURL } from "node:url";
 
 const maxBodyBytes = 64 * 1024;
 
+export const x402ServiceManifest = {
+  x402: "1.0",
+  name: "deterministic-api-brief-acceptance-checklist",
+  capabilities: ["api-testing", "acceptance-criteria", "json", "bilingual"],
+  pricing: { currency: "USDC", base: "0.01", unit: "request" },
+  payment: {
+    address: "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18",
+    chain: "base",
+    facilitator: "https://payanagent.com",
+  },
+  endpoint:
+    "https://payanagent.com/x402/kh7ezjzt4etk8x1s908z7wngqn8d89hx",
+};
+
 function cleanBrief(value) {
   let normalized = value;
   if (value && typeof value === "object" && Array.isArray(value.messages)) {
@@ -151,8 +165,15 @@ function sendJson(response, status, body) {
 
 export function createHandler() {
   return async (request, response) => {
-    if (request.method === "GET" && new URL(request.url, "http://localhost").pathname === "/health") {
+    const pathname = new URL(request.url, "http://localhost").pathname;
+    if (request.method === "GET" && pathname === "/health") {
       return sendJson(response, 200, { status: "ok", service: "api-acceptance-criteria-json-compiler" });
+    }
+    if (
+      request.method === "GET" &&
+      pathname === "/.well-known/x402-service.json"
+    ) {
+      return sendJson(response, 200, x402ServiceManifest);
     }
     if (request.method === "GET") {
       return sendJson(response, 200, {
