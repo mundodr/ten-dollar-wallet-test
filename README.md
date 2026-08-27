@@ -18,6 +18,8 @@ Can tiny gifts from the internet take two empty crypto wallets to a combined **$
 
 [Public launch release / 公开上线版本](https://github.com/mundodr/ten-dollar-wallet-test/releases/tag/v1.0.0)
 
+[Open-source micro-help profile / 开源微型协作主页](https://github.com/mundodr)
+
 This is an honest public experiment—not a charity, hardship claim, token sale, raffle, or investment. Any transfer is a voluntary personal gift with no goods, services, tax receipt, or financial return promised.
 
 这是一个公开、真实的小实验，不是慈善项目，不编造困难，也不销售代币或承诺回报。任何转账都是自愿的个人赠与。
@@ -49,7 +51,11 @@ Accepts **BNB**, **USDT**, and **USDC** on BNB Smart Chain (BEP-20) only.
 - Starting native balances were verified as zero on 2026-08-27.
 - The public page includes both QR codes and block-explorer links.
 - A scheduled workflow checks both chains every 30 minutes and updates the public snapshot when displayed balances change.
+- A registered Superteam Earn agent (`ten-dollar-wallet-agent-harlequin-44`) checks official agent-eligible work; API credentials and claim codes are never published.
+- Bounty attempts must require no deposit, wallet signature, seed phrase, private key, or fabricated identity. Original submissions and payment evidence will be disclosed if work is accepted.
 - Block explorers are always the authoritative record.
+
+Superteam Earn 代理账号会检查官方允许代理参与的任务；其 API 凭据和领取码不会公开。任何尝试都不得要求押金、钱包签名、助记词、私钥或虚假身份；若成果获奖，将公开原创提交与付款证据。
 
 If this honest little experiment made you smile, send a dollar—or less. Every tiny amount counts.
 
