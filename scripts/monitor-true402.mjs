@@ -4,7 +4,12 @@ import { x402ServiceManifest } from "./agentictrade-service-api.mjs";
 
 const registryUrl = "https://true402.dev/api/v1/services";
 const statePath = path.resolve(".true402/listing.json");
-const state = JSON.parse(await readFile(statePath, "utf8"));
+let state;
+try {
+  state = JSON.parse(await readFile(statePath, "utf8"));
+} catch (error) {
+  if (error?.code !== "ENOENT") throw error;
+}
 
 async function fetchWithRetry(url) {
   let lastError;
@@ -19,6 +24,41 @@ async function fetchWithRetry(url) {
     }
   }
   throw lastError;
+}
+
+if (!state) {
+  const manifestBaseUrl = "https://simply-technician-crowd-newton.trycloudflare.com";
+  const manifestResponse = await fetchWithRetry(
+    new URL("/.well-known/x402-service.json", manifestBaseUrl),
+  );
+  const liveManifest = await manifestResponse.json().catch(() => null);
+  const exactManifest =
+    JSON.stringify(liveManifest) === JSON.stringify(x402ServiceManifest);
+  if (!manifestResponse.ok || !exactManifest) {
+    throw new Error("The public true402 manifest is unavailable or has drifted");
+  }
+  console.log(
+    JSON.stringify(
+      {
+        checkedAt: new Date().toISOString(),
+        registered: false,
+        listed: false,
+        manifestOnline: true,
+        exactManifest,
+        endpoint: liveManifest.endpoint,
+        exactBaseWallet:
+          liveManifest.payment?.address?.toLowerCase() ===
+          "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18",
+        chain: liveManifest.payment?.chain,
+        priceUsdc: liveManifest.pricing?.base,
+        nextAction:
+          "Retry scripts/register-true402-service.mjs; the registry TLS connection has not completed yet.",
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(0);
 }
 
 const [manifestResponse, catalogResponse] = await Promise.all([

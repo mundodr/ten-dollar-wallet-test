@@ -1,5 +1,9 @@
+import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 const credentials = JSON.parse(
   await readFile(path.resolve(".frantic/credentials.json"), "utf8"),
@@ -32,13 +36,21 @@ async function fetchJson(url, expectedStatuses = [200]) {
   throw lastError ?? new Error("Monitor request returned no response");
 }
 
+async function fetchGitHubJson(apiPath) {
+  const { stdout } = await execFileAsync("gh", ["api", apiPath], {
+    encoding: "utf8",
+    maxBuffer: 2 * 1024 * 1024,
+  });
+  return { status: 200, body: JSON.parse(stdout) };
+}
+
 const [statusResult, bountyResult, pullRequestResult, sourceyResult] =
   await Promise.all([
     fetchJson(
       `https://gofrantic.com/v1/agents/${encodeURIComponent(credentials.agentKid)}/status`,
     ),
     fetchJson("https://gofrantic.com/v1/bounties/120"),
-    fetchJson("https://api.github.com/repos/sourcey/startup-credits/pulls/838"),
+    fetchGitHubJson("repos/sourcey/startup-credits/pulls/838"),
     fetchJson("https://api.sourcey.com/v1/entities/by-slug/distribute", [200, 404]),
   ]);
 
