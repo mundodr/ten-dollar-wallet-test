@@ -1,0 +1,20 @@
+{
+  "name": "persistent-objective-local",
+  "interface": {
+    "displayName": "Persistent Objective Local"
+  },
+  "plugins": [
+    {
+      "name": "persistent-objective",
+      "source": {
+        "source": "local",
+        "path": "./persistent-objective"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

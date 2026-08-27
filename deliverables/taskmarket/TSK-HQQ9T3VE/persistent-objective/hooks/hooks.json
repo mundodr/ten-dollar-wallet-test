@@ -1,0 +1,31 @@
+{
+  "description": "Bounded continuation for an explicitly started Persistent Objective.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/scripts/hook.mjs\" session-start",
+            "timeout": 5,
+            "statusMessage": "Loading bounded objective state",
+            "additionalContextLimit": 6000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/scripts/hook.mjs\" stop",
+            "timeout": 5,
+            "statusMessage": "Checking persistent objective bounds"
+          }
+        ]
+      }
+    ]
+  }
+}

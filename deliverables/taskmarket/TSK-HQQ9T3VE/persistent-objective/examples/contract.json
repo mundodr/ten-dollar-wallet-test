@@ -1,0 +1,48 @@
+{
+  "objective": "Deliver the requested change with tests passing and auditable evidence.",
+  "workspace": "/absolute/existing/workspace",
+  "completionCriteria": [
+    {
+      "id": "implementation",
+      "text": "The requested behavior is implemented inside the allowed paths."
+    },
+    {
+      "id": "verification",
+      "text": "All recorded verification commands pass."
+    }
+  ],
+  "scope": {
+    "allowedPaths": ["."],
+    "permittedSources": ["checked-in repository files", "official documentation"],
+    "forbiddenActions": ["bypass approvals", "spend money", "publish externally", "rewrite unrelated dirty work"]
+  },
+  "approvals": {
+    "requiredFor": ["credentials", "payments", "destructive actions", "new external side effects"]
+  },
+  "verificationCommands": [
+    {
+      "id": "tests",
+      "command": "npm",
+      "args": ["test"]
+    }
+  ],
+  "queue": [
+    {
+      "id": "inspect",
+      "text": "Inspect current state and identify the smallest safe change."
+    },
+    {
+      "id": "implement",
+      "text": "Implement the bounded change and preserve unrelated work."
+    },
+    {
+      "id": "verify",
+      "text": "Run recorded checks and capture completion evidence."
+    }
+  ],
+  "stoppingRules": {
+    "maxCycles": 20,
+    "maxRuntimeMinutes": 240,
+    "blockerRepeatLimit": 3
+  }
+}

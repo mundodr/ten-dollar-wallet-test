@@ -1,0 +1,27 @@
+{
+  "name": "persistent-objective",
+  "version": "1.0.0",
+  "description": "A fail-closed, auditable persistent objective lifecycle for Codex",
+  "author": {
+    "name": "Ten Dollar Wallet Lab",
+    "url": "https://github.com/mundodr/ten-dollar-wallet-test"
+  },
+  "homepage": "https://github.com/mundodr/ten-dollar-wallet-test/tree/main/deliverables/taskmarket/TSK-HQQ9T3VE/persistent-objective",
+  "repository": "https://github.com/mundodr/ten-dollar-wallet-test",
+  "license": "MIT",
+  "keywords": ["codex", "persistent", "goal", "lifecycle", "safety"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Persistent Objective",
+    "shortDescription": "Continue bounded Codex objectives safely.",
+    "longDescription": "Run one durable, scoped objective through inspect-act-verify cycles with explicit sleep, wake, stop, completion, approval pauses, blocker limits, and tamper detection.",
+    "developerName": "Ten Dollar Wallet Lab",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": [
+      "Start a bounded persistent objective.",
+      "Show persistent objective status.",
+      "Safely stop the persistent objective."
+    ]
+  }
+}
