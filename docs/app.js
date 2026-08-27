@@ -31,11 +31,12 @@ async function refresh() {
       safe(tokenBalance(BSC_USDC), 0),
       safe(fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana,binancecoin&vs_currencies=usd").then(r => r.ok ? r.json() : Promise.reject()), { solana: { usd: 77.97 }, binancecoin: { usd: 709.65 } }),
     ]);
-    const sol = solRaw.value / 1e9;
-    const bnb = Number(BigInt(bnbRaw)) / 1e18;
-    const solUsdc = solTokens.value.reduce((sum, item) => sum + Number(item.account.data.parsed.info.tokenAmount.uiAmountString), 0);
+    const sol = Number(solRaw?.value || 0) / 1e9;
+    const bnb = bnbRaw ? Number(BigInt(bnbRaw)) / 1e18 : 0;
+    const solAccounts = Array.isArray(solTokens?.value) ? solTokens.value : [];
+    const solUsdc = solAccounts.reduce((sum, item) => sum + Number(item.account.data.parsed.info.tokenAmount.uiAmountString), 0);
     const stable = solUsdc + usdt + usdc;
-    const total = sol * (prices.solana?.usd || 77.97) + bnb * (prices.binancecoin?.usd || 709.65) + stable;
+    const total = sol * (prices?.solana?.usd || 77.97) + bnb * (prices?.binancecoin?.usd || 709.65) + stable;
     const pct = Math.min(100, total * 10);
     document.querySelector("#usd-total").textContent = `$${total.toFixed(2)}`;
     document.querySelector("#remaining").textContent = `$${Math.max(0, 10 - total).toFixed(2)} TO GO`;
