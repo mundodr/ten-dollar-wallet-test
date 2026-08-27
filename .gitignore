@@ -47,4 +47,5 @@ yarn-error.log*
 /.moltjobs/
 /.agentictrade/
 /.payanagent/
+/.x402jobs/
 /profile-mundodr/
