@@ -13,6 +13,6 @@
 - Second Taskmarket submission: `daa17e53-320b-43cf-9435-6b7ce606c2ba`, transaction `0xb5a1bf09a8a51dfb7992f02c47ff0e69b5ebd6ce2333f8b5167161a805283a55` at `2026-08-27T20:14:55.360Z`.
 - Submission rule after the second upload: submit only a checkpoint that improves the best submitted public-bank score by at least 3 XP (currently at least 258.9 XP), or the best remaining unsubmitted checkpoint within two hours of expiry.
 
-Run `node scripts/monitor-deathgym.mjs` from the repository root for the service state, progress, ETA, checkpoints, and scored checkpoints.
+Run `node scripts/monitor-deathgym.mjs` from the repository root for the service state, progress, ETA, checkpoints, scored checkpoints, and independently published leaderboard rows keyed by worker address and archive hash.
 
 This benchmark is an earning attempt, not goal funding. It counts only after an award is withdrawable and an independently verified Base transfer reaches the approved target address.

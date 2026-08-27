@@ -11,6 +11,9 @@ const evaluationsDir = path.join(root, "local/evaluations");
 const serviceName = "deathgym-taskmarket-5b.service";
 const targetSteps = 5_000_000_000;
 const taskExpiry = "2026-08-29T21:40:19.006Z";
+const workerAddress = "0xbb8f5dA5e6E14BD221e720D8e1798Fb8A5c7EA71";
+const leaderboardApi =
+  "https://api.github.com/gists/545d0b413e31b315a017157339adca9e";
 
 function serviceProperties() {
   try {
@@ -40,6 +43,55 @@ async function filesIn(directory, suffix) {
   } catch (error) {
     if (error.code === "ENOENT") return [];
     throw error;
+  }
+}
+
+async function publicLeaderboard() {
+  try {
+    const response = await fetch(leaderboardApi, {
+      headers: { Accept: "application/vnd.github+json" },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new Error(`GitHub Gist returned ${response.status}`);
+    const gist = await response.json();
+    const content = gist.files?.["LEADERBOARD.md"]?.content ?? "";
+    const rows = content
+      .split("\n")
+      .filter((line) => /^\|\s*\d+\s*\|/.test(line))
+      .map((line) => {
+        const parts = line.split("|").slice(1, -1).map((part) => part.trim());
+        return {
+          rank: Number(parts[0]),
+          worker: parts[1]?.replaceAll("`", ""),
+          meanXp: Number(parts[2]),
+          submittedAt: parts[3],
+          archiveSha256: parts[4]?.replaceAll("`", ""),
+        };
+      })
+      .filter(
+        (row) =>
+          Number.isFinite(row.rank) &&
+          Number.isFinite(row.meanXp) &&
+          /^[0-9a-f]{64}$/i.test(row.archiveSha256 ?? ""),
+      );
+    const ownRows = rows.filter(
+      (row) => row.worker?.toLowerCase() === workerAddress.toLowerCase(),
+    );
+    return {
+      updatedAt: gist.updated_at ?? null,
+      currentLeaderXp: rows[0]?.meanXp ?? null,
+      ownRows,
+      observedArchiveHashes: new Set(rows.map((row) => row.archiveSha256)),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      updatedAt: null,
+      currentLeaderXp: null,
+      ownRows: [],
+      observedArchiveHashes: new Set(),
+      error: error.message,
+    };
   }
 }
 
@@ -81,6 +133,11 @@ for (const file of submissionFiles) {
   }
 }
 
+const leaderboard = await publicLeaderboard();
+const submittedArchiveHashes = submissions
+  .map((submission) => submission.archiveSha256)
+  .filter(Boolean);
+
 console.log(JSON.stringify({
   checkedAt: new Date().toISOString(),
   service: serviceProperties(),
@@ -100,8 +157,16 @@ console.log(JSON.stringify({
     netPrizeUsdc: 92.5,
     expiryTime: taskExpiry,
     hoursUntilExpiry: Number(((new Date(taskExpiry).getTime() - Date.now()) / 3_600_000).toFixed(2)),
-    currentPublicLeaderXp: 341.1,
+    currentPublicLeaderXp: leaderboard.currentLeaderXp ?? 341.1,
     baseline20mPublicXp: 179.5,
+  },
+  publicLeaderboard: {
+    updatedAt: leaderboard.updatedAt,
+    ownRows: leaderboard.ownRows,
+    submittedArchivesAwaitingLeaderboard: submittedArchiveHashes.filter(
+      (hash) => !leaderboard.observedArchiveHashes.has(hash),
+    ),
+    error: leaderboard.error,
   },
   checkpoints: await filesIn(checkpointDir, ".safetensors"),
   evaluations,
