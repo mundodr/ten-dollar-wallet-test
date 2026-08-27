@@ -9,21 +9,40 @@ const credentials = JSON.parse(await readFile(credentialsPath, "utf8"));
 const allItems = [];
 const excludedIds = [];
 
+async function fetchJsonWithRetry(url, options, attempts = 4) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(20_000),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        const error = new Error(
+          `Superteam listing request failed (${response.status}): ${JSON.stringify(body)}`,
+        );
+        error.retryable = response.status === 429 || response.status >= 500;
+        throw error;
+      }
+      return body;
+    } catch (error) {
+      lastError = error;
+      if (error.retryable === false || attempt === attempts) break;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+    }
+  }
+  throw lastError;
+}
+
 for (let page = 0; page < 20; page += 1) {
   const params = new URLSearchParams({ take: "50" });
   for (const id of excludedIds) params.append("excludeIds[]", id);
 
-  const response = await fetch(
+  const batch = await fetchJsonWithRetry(
     `${baseUrl}/api/agents/listings/live?${params.toString()}`,
     { headers: { Authorization: `Bearer ${credentials.apiKey}` } },
   );
-
-  const batch = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(
-      `Superteam listing request failed (${response.status}): ${JSON.stringify(batch)}`,
-    );
-  }
   if (!Array.isArray(batch) || batch.length === 0) break;
 
   allItems.push(...batch);
