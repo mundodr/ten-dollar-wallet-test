@@ -3,15 +3,19 @@ import path from "node:path";
 
 const baseUrl = "https://agentworld.me/api/agentworld";
 const targetWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
+const treasuryWallet = "0x367f1b3d8ca90d1e087481a9a40d585bf3451a03";
+const registrationTransferHash =
+  "0xa13807c967e0dcc7e70fcedfb7a443f324004405b32c60876587f9cdbec27a12";
 const credentials = JSON.parse(
   await readFile(path.resolve(".agentworld/credentials.json"), "utf8"),
 );
 
 async function fetchJson(endpoint) {
+  const url = endpoint.startsWith("https://") ? endpoint : `${baseUrl}${endpoint}`;
   let lastError;
   for (let attempt = 1; attempt <= 5; attempt += 1) {
     try {
-      const response = await fetch(`${baseUrl}${endpoint}`, {
+      const response = await fetch(url, {
         headers: { Accept: "application/json" },
         signal: AbortSignal.timeout(25_000),
       });
@@ -28,10 +32,11 @@ async function fetchJson(endpoint) {
   throw lastError ?? new Error("AgentWorld returned no response");
 }
 
-const [status, externalProfile, jobsResponse] = await Promise.all([
+const [status, externalProfile, jobsResponse, transactionResponse] = await Promise.all([
   fetchJson(`/agent/status/${encodeURIComponent(credentials.agentId)}`),
   fetchJson(`/registry/${encodeURIComponent(credentials.externalAgentId)}`),
   fetchJson("/jobs"),
+  fetchJson(`https://base.blockscout.com/api/v2/addresses/${targetWallet}/transactions`),
 ]);
 const agent = status?.agent ?? status;
 const externalAgent = externalProfile?.agent ?? externalProfile;
@@ -41,6 +46,15 @@ const exactWallet = wallet?.toLowerCase() === targetWallet;
 const externalWallet = externalAgent?.owner_wallet ?? null;
 const exactExternalWallet = externalWallet?.toLowerCase() === targetWallet;
 const openJobs = jobs.filter((job) => job.status === "open");
+const transactions = transactionResponse?.items ?? [];
+const registrationTransfer = transactions.find(
+  (transaction) =>
+    transaction.hash?.toLowerCase() === registrationTransferHash &&
+    transaction.status === "ok" &&
+    transaction.from?.hash?.toLowerCase() === treasuryWallet &&
+    transaction.to?.hash?.toLowerCase() === targetWallet &&
+    transaction.value === "5000000000000",
+);
 
 console.log(
   JSON.stringify(
@@ -62,6 +76,18 @@ console.log(
       pendingPayout: agent?.pending_payout ?? agent?.pending_usdc ?? null,
       paidUsdc: agent?.paid_usdc ?? agent?.total_paid_usdc ?? null,
       payoutTxHash: agent?.payout_tx_hash ?? agent?.last_payout_tx_hash ?? null,
+      verifiedRegistrationTransfer: registrationTransfer
+        ? {
+            hash: registrationTransfer.hash,
+            blockNumber: registrationTransfer.block_number,
+            valueWei: registrationTransfer.value,
+            valueEth: Number(registrationTransfer.value) / 1e18,
+            from: registrationTransfer.from?.hash ?? null,
+            to: registrationTransfer.to?.hash ?? null,
+            timestamp: registrationTransfer.timestamp,
+            status: registrationTransfer.status,
+          }
+        : null,
       openJobCount: openJobs.length,
       openJobs: openJobs.map((job) => ({
         id: job.id,
@@ -78,6 +104,8 @@ console.log(
   ),
 );
 
-if (!exactWallet || !exactExternalWallet) {
-  throw new Error("AgentWorld profiles are not bound to the target Base address");
+if (!exactWallet || !exactExternalWallet || !registrationTransfer) {
+  throw new Error(
+    "AgentWorld profiles or the expected registration transfer no longer verify",
+  );
 }
