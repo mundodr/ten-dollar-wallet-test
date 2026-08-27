@@ -22,13 +22,14 @@ async function readOptionalJson(file) {
   }
 }
 
-async function fetchJson(endpoint) {
+async function fetchJson(endpoint, options = {}) {
   const url = endpoint.startsWith("https://") ? endpoint : `${baseUrl}${endpoint}`;
   let lastError;
   for (let attempt = 1; attempt <= 5; attempt += 1) {
     try {
       const response = await fetch(url, {
-        headers: { Accept: "application/json" },
+        ...options,
+        headers: { Accept: "application/json", ...options.headers },
         signal: AbortSignal.timeout(25_000),
       });
       const body = await response.json().catch(() => null);
@@ -44,13 +45,46 @@ async function fetchJson(endpoint) {
   throw lastError ?? new Error("AgentWorld returned no response");
 }
 
+async function baseRpc(method, params) {
+  const response = await fetchJson("https://mainnet.base.org", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  if (response?.error) {
+    throw new Error(`Base RPC ${method} failed: ${response.error.message}`);
+  }
+  return response?.result ?? null;
+}
+
 const digitalStoreState = await readOptionalJson(digitalStoreStatePath);
-const [status, externalProfile, jobsResponse, transactionResponse, productsResponse] = await Promise.all([
+const [
+  status,
+  externalProfile,
+  jobsResponse,
+  productsResponse,
+  explorerResult,
+  rpcTransactionResult,
+  rpcReceiptResult,
+] = await Promise.all([
   fetchJson(`/agent/status/${encodeURIComponent(credentials.agentId)}`),
   fetchJson(`/registry/${encodeURIComponent(credentials.externalAgentId)}`),
   fetchJson("/jobs"),
-  fetchJson(`https://base.blockscout.com/api/v2/addresses/${targetWallet}/transactions`),
   fetchJson("/digital-store/products"),
+  fetchJson(
+    `https://base.blockscout.com/api/v2/addresses/${targetWallet}/transactions`,
+  ).then(
+    (value) => ({ value, error: null }),
+    (error) => ({ value: null, error: error.message }),
+  ),
+  baseRpc("eth_getTransactionByHash", [registrationTransferHash]).then(
+    (value) => ({ value, error: null }),
+    (error) => ({ value: null, error: error.message }),
+  ),
+  baseRpc("eth_getTransactionReceipt", [registrationTransferHash]).then(
+    (value) => ({ value, error: null }),
+    (error) => ({ value: null, error: error.message }),
+  ),
 ]);
 const agent = status?.agent ?? status;
 const externalAgent = externalProfile?.agent ?? externalProfile;
@@ -60,12 +94,12 @@ const exactWallet = wallet?.toLowerCase() === targetWallet;
 const externalWallet = externalAgent?.owner_wallet ?? null;
 const exactExternalWallet = externalWallet?.toLowerCase() === targetWallet;
 const openJobs = jobs.filter((job) => job.status === "open");
-const transactions = transactionResponse?.items ?? [];
+const transactions = explorerResult.value?.items ?? [];
 const products = productsResponse?.products ?? [];
 const digitalStoreProduct = digitalStoreState
   ? products.find((product) => product.id === digitalStoreState.productId) ?? null
   : null;
-const registrationTransfer = transactions.find(
+const explorerRegistrationTransfer = transactions.find(
   (transaction) =>
     transaction.hash?.toLowerCase() === registrationTransferHash &&
     transaction.status === "ok" &&
@@ -73,6 +107,19 @@ const registrationTransfer = transactions.find(
     transaction.to?.hash?.toLowerCase() === targetWallet &&
     transaction.value === "5000000000000",
 );
+const rpcTransaction = rpcTransactionResult.value;
+const rpcReceipt = rpcReceiptResult.value;
+const rpcRegistrationTransfer =
+  rpcTransaction?.hash?.toLowerCase() === registrationTransferHash &&
+  rpcTransaction?.from?.toLowerCase() === treasuryWallet &&
+  rpcTransaction?.to?.toLowerCase() === targetWallet &&
+  BigInt(rpcTransaction?.value ?? "0x0") === 5_000_000_000_000n &&
+  rpcReceipt?.transactionHash?.toLowerCase() === registrationTransferHash &&
+  rpcReceipt?.status === "0x1"
+    ? rpcTransaction
+    : null;
+const registrationTransfer =
+  explorerRegistrationTransfer ?? rpcRegistrationTransfer;
 
 console.log(
   JSON.stringify(
@@ -115,15 +162,36 @@ console.log(
       verifiedRegistrationTransfer: registrationTransfer
         ? {
             hash: registrationTransfer.hash,
-            blockNumber: registrationTransfer.block_number,
-            valueWei: registrationTransfer.value,
-            valueEth: Number(registrationTransfer.value) / 1e18,
-            from: registrationTransfer.from?.hash ?? null,
-            to: registrationTransfer.to?.hash ?? null,
-            timestamp: registrationTransfer.timestamp,
-            status: registrationTransfer.status,
+            source: explorerRegistrationTransfer ? "blockscout" : "base_rpc",
+            blockNumber:
+              registrationTransfer.block_number ??
+              Number.parseInt(registrationTransfer.blockNumber, 16),
+            valueWei: explorerRegistrationTransfer
+              ? registrationTransfer.value
+              : BigInt(registrationTransfer.value).toString(),
+            valueEth:
+              Number(
+                explorerRegistrationTransfer
+                  ? registrationTransfer.value
+                  : BigInt(registrationTransfer.value),
+              ) / 1e18,
+            from:
+              registrationTransfer.from?.hash ?? registrationTransfer.from ?? null,
+            to: registrationTransfer.to?.hash ?? registrationTransfer.to ?? null,
+            timestamp: registrationTransfer.timestamp ?? null,
+            status:
+              registrationTransfer.status ??
+              (rpcReceipt?.status === "0x1" ? "ok" : null),
           }
         : null,
+      chainEvidence: {
+        blockscoutAvailable: !explorerResult.error,
+        blockscoutError: explorerResult.error,
+        baseRpcTransactionAvailable: !rpcTransactionResult.error,
+        baseRpcTransactionError: rpcTransactionResult.error,
+        baseRpcReceiptAvailable: !rpcReceiptResult.error,
+        baseRpcReceiptError: rpcReceiptResult.error,
+      },
       openJobCount: openJobs.length,
       openJobs: openJobs.map((job) => ({
         id: job.id,
