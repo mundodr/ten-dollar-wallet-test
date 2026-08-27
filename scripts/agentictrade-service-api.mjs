@@ -724,6 +724,52 @@ async function receiveAgentPactWebhook(
   return sendJson(response, 200, { ok: true });
 }
 
+async function receiveTaskBountyWebhook(
+  request,
+  response,
+  { taskBountyWebhookSecret, recordTaskBountyWebhook },
+) {
+  if (!taskBountyWebhookSecret) {
+    return sendJson(response, 503, { error: "webhook_not_configured" });
+  }
+
+  let rawBody;
+  try {
+    rawBody = await readRequestBody(request);
+  } catch (error) {
+    return sendJson(response, error.statusCode ?? 400, {
+      error: error.message,
+    });
+  }
+  const signature = request.headers["x-taskbounty-signature"];
+  if (
+    typeof signature !== "string" ||
+    !verifyWebhookSignature(rawBody, signature, taskBountyWebhookSecret)
+  ) {
+    return sendJson(response, 401, { error: "invalid_webhook_signature" });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(rawBody.toString("utf8"));
+  } catch {
+    return sendJson(response, 400, { error: "invalid_json" });
+  }
+  if (!event || typeof event !== "object" || Array.isArray(event)) {
+    return sendJson(response, 400, { error: "invalid_event" });
+  }
+
+  try {
+    await recordTaskBountyWebhook?.({
+      receivedAt: new Date().toISOString(),
+      event,
+    });
+  } catch {
+    return sendJson(response, 500, { error: "webhook_record_failed" });
+  }
+  return sendJson(response, 200, { ok: true });
+}
+
 async function proxyPayanX402(
   request,
   response,
@@ -819,6 +865,8 @@ export function createHandler({
   publicX402Url = defaultPublicX402Url,
   agentPactWebhookSecret = null,
   recordAgentPactWebhook = null,
+  taskBountyWebhookSecret = null,
+  recordTaskBountyWebhook = null,
   verifyX402ApisPayment = (signature, minimumUsdc) =>
     verifySolanaUsdcPayment(signature, minimumUsdc, { fetchImpl }),
   consumeX402ApisPayment = async () => true,
@@ -960,6 +1008,15 @@ export function createHandler({
         recordAgentPactWebhook,
       });
     }
+    if (pathname === "/taskbounty/webhook") {
+      if (request.method !== "POST") {
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      }
+      return receiveTaskBountyWebhook(request, response, {
+        taskBountyWebhookSecret,
+        recordTaskBountyWebhook,
+      });
+    }
     if (request.method === "GET") {
       return sendJson(response, 200, {
         service: "API Acceptance Criteria JSON Compiler",
@@ -1019,6 +1076,24 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       { encoding: "utf8", mode: 0o600 },
     );
   };
+  let taskBountyWebhookSecret = null;
+  try {
+    const webhookConfig = JSON.parse(
+      await readFile(path.resolve(".taskbounty/webhook.json"), "utf8"),
+    );
+    taskBountyWebhookSecret = webhookConfig.secret ?? null;
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  const recordTaskBountyWebhook = async (entry) => {
+    const directory = path.resolve(".taskbounty");
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    await appendFile(
+      path.join(directory, "webhook-events.ndjson"),
+      `${JSON.stringify(entry)}\n`,
+      { encoding: "utf8", mode: 0o600 },
+    );
+  };
   const x402ApisStats = {
     startedAt: Date.now(),
     requestsServed: 0,
@@ -1032,6 +1107,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     createHandler({
       agentPactWebhookSecret,
       recordAgentPactWebhook,
+      taskBountyWebhookSecret,
+      recordTaskBountyWebhook,
       consumeX402ApisPayment,
       x402ApisStats,
     }),

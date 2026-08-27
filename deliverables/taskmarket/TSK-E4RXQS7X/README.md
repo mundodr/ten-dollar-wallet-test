@@ -11,7 +11,9 @@
 - First Taskmarket submission: `e192ee7e-d9b2-42cd-9b37-15ea2b1a895c`, transaction `0x0247530a08c1dccafa7f5004b7f7f1807379942f5c889930a115e4f5dbe699be` at `2026-08-27T19:06:07.967Z`.
 - Second long-run checkpoint: `step499M.safetensors`, 255.9 XP on the same 49,152-world public bank, validator passed; immutable archive SHA-256 `fdcf56be4e41b1b1a0755bd6f1efdb4f224fb42997e51cf2a8801ab5097f3ed3`.
 - Second Taskmarket submission: `daa17e53-320b-43cf-9435-6b7ce606c2ba`, transaction `0xb5a1bf09a8a51dfb7992f02c47ff0e69b5ebd6ce2333f8b5167161a805283a55` at `2026-08-27T20:14:55.360Z`.
-- Submission rule after the second upload: submit only a checkpoint that improves the best submitted public-bank score by at least 3 XP (currently at least 258.9 XP), or the best remaining unsubmitted checkpoint within two hours of expiry.
+- Third long-run checkpoint: `step749M.safetensors`, 263.5 XP on the same public bank, validator passed; immutable archive SHA-256 `f898e1db0b4158280565e76c7ecf533d7ac0b88bcf4f8adb3b8e13113fb768b2`.
+- Third Taskmarket submission: `e924b0e2-b5df-4276-a354-43708faec83f`, transaction `0xd30b7d47e99495147f11345d08f07318a51c6c466c7362e37f0780b23a5efdb2` at `2026-08-27T21:37:00.172Z`.
+- Submission rule after the third upload: submit only a checkpoint that improves the best submitted public-bank score by at least 3 XP (currently at least 266.5 XP), or the best remaining unsubmitted checkpoint within two hours of expiry.
 
 Run `node scripts/monitor-deathgym.mjs` from the repository root for the service state, progress, ETA, checkpoints, scored checkpoints, and independently published leaderboard rows keyed by worker address and archive hash.
 

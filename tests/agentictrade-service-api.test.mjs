@@ -462,3 +462,50 @@ test("AgentPact webhook accepts only a valid HMAC signature", async () => {
   assert.deepEqual(recorded[0].event, event);
   assert.match(recorded[0].receivedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
+
+test("TaskBounty webhook accepts only its signed funded-task event", async () => {
+  const secret = "test-only-taskbounty-webhook-secret";
+  const event = {
+    task_id: "task-123",
+    title: "Fix parser regression",
+    bounty_cents: 2500,
+  };
+  const rawBody = JSON.stringify(event);
+  const signature = `sha256=${createHmac("sha256", secret)
+    .update(rawBody)
+    .digest("hex")}`;
+  const recorded = [];
+
+  await withServer(
+    createHandler({
+      taskBountyWebhookSecret: secret,
+      recordTaskBountyWebhook: async (entry) => recorded.push(entry),
+    }),
+    async (baseUrl) => {
+      const rejected = await fetch(`${baseUrl}/taskbounty/webhook`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-TaskBounty-Signature": "bad-signature",
+        },
+        body: rawBody,
+      });
+      assert.equal(rejected.status, 401);
+
+      const accepted = await fetch(`${baseUrl}/taskbounty/webhook`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-TaskBounty-Signature": signature,
+        },
+        body: rawBody,
+      });
+      assert.equal(accepted.status, 200);
+      assert.deepEqual(await accepted.json(), { ok: true });
+    },
+  );
+
+  assert.equal(recorded.length, 1);
+  assert.deepEqual(recorded[0].event, event);
+  assert.match(recorded[0].receivedAt, /^\d{4}-\d{2}-\d{2}T/);
+});
