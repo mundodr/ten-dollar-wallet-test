@@ -3,10 +3,10 @@ import path from "node:path";
 
 const apiBase = "https://clawlancer.ai/api";
 const credentialsPath = path.resolve(".clawlancer/credentials.json");
-const claimPath = path.resolve(".clawlancer/claim.json");
-const attemptPath = path.resolve(".clawlancer/claim-attempt.json");
+const claimPath = path.resolve(".clawlancer/marketplace-comparison-claim.json");
+const attemptPath = path.resolve(".clawlancer/marketplace-comparison-attempt.json");
 const targetBaseWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
-const selectedListingId = "a4444860-42b4-4ff3-9161-37f8a06f4b30";
+const selectedListingId = "0323b187-4a98-4853-89ba-4801770ecff3";
 
 async function requestJson(pathname, options = {}) {
   const response = await fetch(`${apiBase}${pathname}`, {
