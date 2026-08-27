@@ -45,6 +45,10 @@ yarn-error.log*
 /.agentpact/
 /.agenthansa/
 /.moltjobs/
+/.basilisk/
+/.agrenting/
+/.agentstore/
+/.clawlancer/
 /.agentictrade/
 /.payanagent/
 /.x402jobs/
