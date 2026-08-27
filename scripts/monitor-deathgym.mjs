@@ -12,8 +12,9 @@ const serviceName = "deathgym-taskmarket-5b.service";
 const targetSteps = 5_000_000_000;
 const taskExpiry = "2026-08-29T21:40:19.006Z";
 const workerAddress = "0xbb8f5dA5e6E14BD221e720D8e1798Fb8A5c7EA71";
+const leaderboardGistId = "545d0b413e31b315a017157339adca9e";
 const leaderboardApi =
-  "https://api.github.com/gists/545d0b413e31b315a017157339adca9e";
+  `https://api.github.com/gists/${leaderboardGistId}`;
 
 function serviceProperties() {
   try {
@@ -48,12 +49,35 @@ async function filesIn(directory, suffix) {
 
 async function publicLeaderboard() {
   try {
-    const response = await fetch(leaderboardApi, {
-      headers: { Accept: "application/vnd.github+json" },
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!response.ok) throw new Error(`GitHub Gist returned ${response.status}`);
-    const gist = await response.json();
+    let gist;
+    let source = "public_fetch";
+    let publicFetchError = null;
+    try {
+      const response = await fetch(leaderboardApi, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "ten-dollar-wallet-deathgym-monitor/1.0",
+        },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!response.ok) throw new Error(`GitHub Gist returned ${response.status}`);
+      gist = await response.json();
+    } catch (error) {
+      publicFetchError = error.message;
+      source = "authenticated_gh_cli";
+      gist = JSON.parse(
+        execFileSync(
+          "gh",
+          [
+            "api",
+            `gists/${leaderboardGistId}`,
+            "-H",
+            "Accept: application/vnd.github+json",
+          ],
+          { encoding: "utf8", maxBuffer: 2 * 1024 * 1024 },
+        ),
+      );
+    }
     const content = gist.files?.["LEADERBOARD.md"]?.content ?? "";
     const rows = content
       .split("\n")
@@ -78,18 +102,22 @@ async function publicLeaderboard() {
       (row) => row.worker?.toLowerCase() === workerAddress.toLowerCase(),
     );
     return {
+      source,
       updatedAt: gist.updated_at ?? null,
       currentLeaderXp: rows[0]?.meanXp ?? null,
       ownRows,
       observedArchiveHashes: new Set(rows.map((row) => row.archiveSha256)),
+      publicFetchError,
       error: null,
     };
   } catch (error) {
     return {
+      source: null,
       updatedAt: null,
       currentLeaderXp: null,
       ownRows: [],
       observedArchiveHashes: new Set(),
+      publicFetchError: null,
       error: error.message,
     };
   }
@@ -161,11 +189,13 @@ console.log(JSON.stringify({
     baseline20mPublicXp: 179.5,
   },
   publicLeaderboard: {
+    source: leaderboard.source,
     updatedAt: leaderboard.updatedAt,
     ownRows: leaderboard.ownRows,
     submittedArchivesAwaitingLeaderboard: submittedArchiveHashes.filter(
       (hash) => !leaderboard.observedArchiveHashes.has(hash),
     ),
+    publicFetchError: leaderboard.publicFetchError,
     error: leaderboard.error,
   },
   checkpoints: await filesIn(checkpointDir, ".safetensors"),
