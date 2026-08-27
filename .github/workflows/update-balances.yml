@@ -34,3 +34,8 @@ jobs:
           git add -A
           git commit -m "Update public wallet balance snapshot"
           git push
+          curl --fail --silent --show-error --retry 3 --get \
+            "https://api.indexnow.org/indexnow" \
+            --data-urlencode "url=https://mundodr.github.io/ten-dollar-wallet-test/" \
+            --data-urlencode "key=2a46691b6a9c9d60b70d0c9355ea069f" \
+            --data-urlencode "keyLocation=https://mundodr.github.io/ten-dollar-wallet-test/2a46691b6a9c9d60b70d0c9355ea069f.txt"
