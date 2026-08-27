@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "reviewed_file": "deliverables/agentpact/csv-dedup/dedupe_csv.py",
+  "scope": "Static review of file handling, resource bounds, data safety, and failure behavior.",
+  "findings": [
+    {
+      "id": "PY-001",
+      "title": "Unbounded whole-file reads can exhaust memory",
+      "severity": "medium",
+      "confidence": "high",
+      "lines": [15, 28, 79],
+      "evidence": "read_text loads the full input before DictReader builds a second in-memory row list; validation then reads the output again.",
+      "impact": "A very large or attacker-supplied CSV can exhaust process memory and terminate the job before a validated output is produced.",
+      "assumptions": "Relevant when file size is not constrained by a trusted caller or upload layer.",
+      "remediation": "Enforce a byte-size and row-count limit, sample only the prefix needed by Sniffer, and stream rows through a bounded or disk-backed key store when large inputs are supported."
+    },
+    {
+      "id": "PY-002",
+      "title": "Spreadsheet formulas are preserved in exported cells",
+      "severity": "medium",
+      "confidence": "high",
+      "lines": [39, 45, 68],
+      "evidence": "Rows are copied verbatim, so cells beginning with =, +, -, or @ remain formulas when opened by spreadsheet software.",
+      "impact": "A recipient who opens untrusted output in a spreadsheet may execute formula behavior or follow attacker-controlled links supported by that application.",
+      "assumptions": "Relevant only when untrusted CSV data is later opened in formula-capable spreadsheet software.",
+      "remediation": "Offer an explicit spreadsheet-safe mode that prefixes formula-leading cells with an apostrophe, document the semantic change, and keep raw-preservation mode available for non-spreadsheet pipelines."
+    },
+    {
+      "id": "PY-003",
+      "title": "Direct output writes can leave a partial file",
+      "severity": "low",
+      "confidence": "high",
+      "lines": [58, 68, 111],
+      "evidence": "The destination is truncated and written before validation; an exception or process interruption can leave a partial destination at the requested path.",
+      "impact": "Downstream automation may consume an incomplete file if it watches the destination path concurrently or after a failed run.",
+      "assumptions": "Relevant when the destination is consumed by another process or replaces a prior good artifact.",
+      "remediation": "Write to a temporary file in the destination directory, flush and fsync it, validate the temporary file, then atomically replace the destination."
+    },
+    {
+      "id": "PY-004",
+      "title": "Input and output identity is checked before the write",
+      "severity": "low",
+      "confidence": "medium",
+      "lines": [98, 110],
+      "evidence": "The resolve-based equality check and the later output open are separate operations, so a concurrently changed symlink can invalidate the earlier check.",
+      "impact": "In a privileged multi-user wrapper, a local attacker who can mutate path components may redirect the write toward the input or another writable file.",
+      "assumptions": "Not a practical issue for a single-user CLI invocation; relevant only with untrusted writable path components and concurrent mutation.",
+      "remediation": "For privileged or multi-user use, reject symlinks, open directory/file descriptors with no-follow semantics, and perform atomic output replacement within a trusted directory."
+    }
+  ],
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 2,
+    "low": 2,
+    "informational": 0
+  }
+}

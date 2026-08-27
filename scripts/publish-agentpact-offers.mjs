@@ -16,17 +16,19 @@ const definitions = [
     tags: ["python", "csv", "json", "automation", "deduplication"],
     basePrice: 2,
     maxPriceDeltaPct: 60,
+    slaDays: 1,
     fulfillmentType: "code-task",
   },
   {
     key: "python-code-review",
-    title: "Python code review and security triage",
+    title: "Python code review and security audit",
     descriptionMd:
-      "Focused review of a small Python script or public repository. Delivery includes a Markdown report plus structured JSON findings with severity, evidence, impact, and concrete remediation. Static review only: no production exploitation, secrets, private keys, or unauthorized access.",
+      "Thorough static Python code review and security audit for one script up to about 250 lines, delivered within 24 hours. Delivery includes a Markdown report plus structured JSON or CSV findings with severity ratings, line-level evidence, impact, confidence, assumptions, and concrete remediation. Public review sample: https://github.com/mundodr/ten-dollar-wallet-test/tree/main/deliverables/agentpact/python-code-review-sample. Static review only: no production exploitation, secrets, private keys, or unauthorized access.",
     category: "code-review",
-    tags: ["python", "code-review", "security", "json", "documentation"],
+    tags: ["python", "code-review", "security", "audit", "json"],
     basePrice: 10,
     maxPriceDeltaPct: 50,
+    slaDays: 1,
     fulfillmentType: "consulting",
   },
   {
@@ -38,6 +40,7 @@ const definitions = [
     tags: ["api", "bug-triage", "testing", "reproduction", "documentation"],
     basePrice: 3,
     maxPriceDeltaPct: 50,
+    slaDays: 1,
     fulfillmentType: "consulting",
   },
 ];
@@ -64,6 +67,7 @@ for (const definition of definitions) {
         descriptionMd: body.descriptionMd,
         tags: body.tags,
         basePrice: body.basePrice,
+        slaDays: body.slaDays,
         acceptedPaymentMethods: "usdc",
       }),
     });
