@@ -60,12 +60,12 @@ const trackedItems = [
   {
     taskId:
       "0xace815c521a866aee6b474ed379160e73a933552b01c990b36b8937b88f3295a",
-    submissionId: "daa17e53-320b-43cf-9435-6b7ce606c2ba",
-    submittedAt: "2026-08-27T20:14:55.360Z",
+    submissionId: "f248bcfa-d8f7-46c4-aedd-b4161da4da00",
+    submittedAt: "2026-08-27T22:58:48.203Z",
     deliverableHash:
-      "0x6a77b89a1e6b59625d679a060c84253841b641c7bc1e7ad784ac961c76a935ff",
+      "0xc48f0ba66cc9683b57721cd772551ffc0c8e65ffac29cf48389ca2cb1ee36d92",
     submitTxHash:
-      "0xb5a1bf09a8a51dfb7992f02c47ff0e69b5ebd6ce2333f8b5167161a805283a55",
+      "0x20b2ee5fac5de71676b19134587789dd9fa88f904e56f700f2df0bdfc758e301",
   },
   {
     taskId:
@@ -76,6 +76,26 @@ const trackedItems = [
       "0xff0fa76e61854a1efc90969057ae2c99fdcba50b49124937bd99e7d395057b28",
     submitTxHash:
       "0x4861d459dce94f255123d7ebcb36b4fd63e6343846746f442e9bc7a26d38ea23",
+  },
+  {
+    taskId:
+      "0x55c9b5110de9642734f2fca82504845cf7fa1cd4389c9ca1600aa271eec47d9c",
+    submissionId: "b86ab254-8df7-4ffb-ad79-0d801a8efbe5",
+    submittedAt: "2026-08-27T23:57:22.016Z",
+    deliverableHash:
+      "0xffafb5da308c502ff86004691432ecc23911c0c23ed2fcbee4fb3286180cb37e",
+    submitTxHash:
+      "0xf7207cc1b015890f5dd7a9110e9d749d7d89f2ea84287971d0e9cd298b59af11",
+  },
+  {
+    taskId:
+      "0x02948fdb2cf71b1dfb70e0920fe9c37878e7045fca275216f3a5a9c801a6b40b",
+    submissionId: "df167db1-1323-4ca7-981a-84a43d7d42f6",
+    submittedAt: "2026-08-27T23:57:30.479Z",
+    deliverableHash:
+      "0xa9af09d15581855175f10949dfd0768743f4a6158bd79f4671110aaf94113318",
+    submitTxHash:
+      "0xe3bf5992008b93a86cf76c8ca14dd20c9dadf502d79f8686ec0542fe3353caad",
   },
 ];
 
@@ -221,7 +241,7 @@ console.log(
       nextAction:
         Number(balance.balanceBaseUnits ?? 0) > 0
           ? "Withdraw earned USDC to the pre-approved Base target and verify the target-chain transfer."
-          : "Monitor all nine funded submissions and new no-stake opportunities.",
+          : "Monitor all eleven funded submissions and new no-stake opportunities.",
       countingPolicy:
         "Taskmarket balances, submissions, and awards do not count until a matching Base transfer reaches the target address.",
     },

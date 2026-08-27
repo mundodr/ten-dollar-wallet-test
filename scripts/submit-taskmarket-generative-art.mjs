@@ -107,6 +107,8 @@ const before = submissionList(run(["task", "my-submissions"]));
 const results = [];
 
 for (const item of tasks) {
+  const archivePath = await assertHash(item.archive);
+  const previewPath = await assertHash(item.preview);
   const existing = before.find(
     (submission) => submission.taskId?.toLowerCase() === item.taskId.toLowerCase(),
   );
@@ -121,8 +123,6 @@ for (const item of tasks) {
 
   const task = run(["task", "get", item.taskId]);
   assertTaskCanReceiveSubmission(task, item);
-  const archivePath = await assertHash(item.archive);
-  const previewPath = await assertHash(item.preview);
   const submission = run(
     [
       "task",
@@ -145,12 +145,25 @@ for (const item of tasks) {
   });
 }
 
-const after = submissionList(run(["task", "my-submissions"]));
 const readback = tasks.map((item) => {
-  const submission = after.find(
-    (candidate) => candidate.taskId?.toLowerCase() === item.taskId.toLowerCase(),
+  const expectedHashes = new Set([
+    item.archive.sha256.toLowerCase(),
+    item.preview.sha256.toLowerCase(),
+  ]);
+  const submissions = submissionList(run(["task", "submissions", item.taskId]));
+  const submission = submissions.find(
+    (candidate) =>
+      candidate.workerAddress?.toLowerCase() === workerAddress.toLowerCase() &&
+      expectedHashes.size ===
+        new Set(
+          (candidate.artifacts ?? [])
+            .map((artifact) => artifact.sha256Hash?.toLowerCase())
+            .filter((hash) => expectedHashes.has(hash)),
+        ).size,
   );
-  if (!submission) throw new Error(`Official readback missing for ${item.referenceCode}`);
+  if (!submission) {
+    throw new Error(`Exact official artifact readback missing for ${item.referenceCode}`);
+  }
   return { referenceCode: item.referenceCode, ...compactSubmission(submission) };
 });
 
