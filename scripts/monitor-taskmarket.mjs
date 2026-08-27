@@ -47,6 +47,16 @@ const trackedItems = [
     submitTxHash:
       "0xbdbf33ff82fbc1a8b7891ac7012bd41060701b99d1ecf2997d6d27bfe60232df",
   },
+  {
+    taskId:
+      "0x992af430519bc0a987b725e794cf5953f122fa38c0ea1f626a328cf897af7bad",
+    submissionId: "7c7ea2f2-5b68-4256-9c0d-0ce8955747ab",
+    submittedAt: "2026-08-27T16:43:12.378Z",
+    deliverableHash:
+      "0xcf285e43aa3743cc5992333cda3dc67b201cde9d0c6739fa3dad50e3844e7f8d",
+    submitTxHash:
+      "0xcaf236a13148f61156f758d9a73a749422d8960696ca019e2af765c2e111c10e",
+  },
 ];
 
 async function fetchJson(pathname, attempts = 4) {
@@ -151,6 +161,7 @@ const eligibleOpenTasks = openTasks
     (item) =>
       item.submissionWindowOpen !== false &&
       item.stakeRequired !== true &&
+      !trackedItems.some((tracked) => tracked.taskId === item.id) &&
       Number(item.netReward ?? item.reward ?? 0) >= 1_000_000 &&
       !excludedOpportunityPattern.test(
         `${item.description ?? ""} ${(item.tags ?? []).join(" ")}`,
@@ -190,7 +201,7 @@ console.log(
       nextAction:
         Number(balance.balanceBaseUnits ?? 0) > 0
           ? "Withdraw earned USDC to the pre-approved Base target and verify the target-chain transfer."
-          : "Monitor all six funded submissions and new no-stake opportunities.",
+          : "Monitor all seven funded submissions and new no-stake opportunities.",
       countingPolicy:
         "Taskmarket balances, submissions, and awards do not count until a matching Base transfer reaches the target address.",
     },

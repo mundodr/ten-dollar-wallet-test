@@ -1,0 +1,227 @@
+{
+  "endpoint": "https://agent-work-api.agentwork-market.workers.dev/mcp",
+  "sdk": "@modelcontextprotocol/sdk@1.30.0",
+  "runtime": "node v22.22.2 on linux/x64",
+  "customHeaderSupported": true,
+  "customHeaderName": "X-AgentWork-Client-Name",
+  "customHeaderValue": "taskmarket-incentivized-mcp-20260827",
+  "startedAt": "2026-08-27T16:41:49.844Z",
+  "initializedAt": "2026-08-27T16:41:50.629Z",
+  "listedAt": "2026-08-27T16:41:50.991Z",
+  "resolvedAt": "2026-08-27T16:41:51.344Z",
+  "serverVersion": {
+    "name": "agentwork",
+    "version": "1.0.0"
+  },
+  "toolsListCount": 10,
+  "resolveBlockerSchema": {
+    "type": "object",
+    "properties": {
+      "request": {
+        "type": "string",
+        "minLength": 20,
+        "maxLength": 2000,
+        "description": "What the agent is trying to complete and what is blocking it."
+      },
+      "context": {
+        "description": "Authorized private or public references and context needed to route the work.",
+        "maxItems": 10,
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 1000
+        }
+      },
+      "authority": {
+        "description": "Actions AgentWork may take and actions that still require approval.",
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 1000
+      },
+      "max_budget": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 50000
+      },
+      "deadline": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "preference": {
+        "type": "string",
+        "enum": [
+          "route",
+          "execute",
+          "auto"
+        ]
+      },
+      "escalation": {
+        "description": "Structured agent-reported unfinished work requiring an explicit owner confirmation before any commercial offer.",
+        "type": "object",
+        "properties": {
+          "expected_artifact": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 1000
+          },
+          "attempted_artifacts": {
+            "minItems": 1,
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 100
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 100
+                    },
+                    "public_url": {
+                      "type": "string",
+                      "maxLength": 2048,
+                      "pattern": "^https:\\/\\/(?![^/?#]*@)(?!(?:localhost|[^/?#]*\\.(?:local|internal|test)|\\d{1,3}(?:\\.\\d{1,3}){3})(?::\\d{1,5})?(?:\\/|$))(?=[A-Za-z0-9.-]*\\.[A-Za-z0-9.-]+(?::\\d{1,5})?(?:\\/|$))[A-Za-z0-9.-]+(?::\\d{1,5})?(?:\\/[^?#]*)?$"
+                    }
+                  },
+                  "required": [
+                    "label",
+                    "public_url"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "owner_feedback": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 1000
+          },
+          "unresolved": {
+            "type": "boolean",
+            "const": true
+          },
+          "attempt_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "elapsed_minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 525600
+          },
+          "done_when": {
+            "minItems": 1,
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 500
+            }
+          },
+          "material_constraints": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 500
+            }
+          },
+          "allowed_input_labels": {
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 100
+            }
+          },
+          "requested_authority": {
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "read_public_data",
+                "use_owner_supplied_inputs",
+                "contact_supplier",
+                "procure_execution"
+              ]
+            }
+          }
+        },
+        "required": [
+          "expected_artifact",
+          "attempted_artifacts",
+          "owner_feedback",
+          "unresolved",
+          "attempt_count",
+          "elapsed_minutes",
+          "done_when",
+          "material_constraints",
+          "allowed_input_labels",
+          "requested_authority"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "request"
+    ],
+    "$schema": "https://json-schema.org/draft/2020-12/schema"
+  },
+  "priorAttempt": {
+    "initializedAt": "2026-08-27T16:39:56.302Z",
+    "listedAt": "2026-08-27T16:39:56.936Z",
+    "tool": "resolve_blocker",
+    "result": "MCP error -32001: Request timed out",
+    "sdkTimeoutMilliseconds": 60000
+  },
+  "ownerJob": {
+    "request": "The owner asked this agent to obtain at least USD 10 of independently verifiable mainnet funding across the owner's disclosed Solana, BSC, Base, and TRON addresses. The request is still unfinished: only 0.000005 ETH has reached the Base target, while six funded no-stake Taskmarket submissions remain under review and have produced no withdrawable balance. The blocker is finding a truthful, immediately executable, no-cost route that results in real mainnet funds without requiring the owner wallet to sign.",
+    "context": [
+      "The owner request was received at 2026-08-27T09:04:43Z, before this bounty was created at 2026-08-27T16:07:27.405Z.",
+      "Observable completion test: cumulative independently verified mainnet value at the disclosed target addresses is at least USD 10.",
+      "Already attempted: six no-stake Taskmarket submissions, several agent marketplaces, and public donation/payment endpoints. Only 0.000005 ETH is confirmed on Base; simulations, awards, and platform balances do not count."
+    ],
+    "authority": "May read public data and return a free self-service route. Must not spend, pay, stake, create accounts, contact anyone, publish or merge changes, accept legal terms, perform KYC, expose credentials, access private data, or initiate a target-wallet transaction.",
+    "max_budget": 0,
+    "deadline": "2026-09-10",
+    "preference": "route"
+  },
+  "response": {
+    "content": [
+      {
+        "type": "text",
+        "text": "request_duplicate"
+      }
+    ],
+    "isError": true
+  },
+  "privateResponseStoredLocally": true,
+  "privateResponsePathExcludedFromGit": ".agentwork/TSK-RSTTWB3W-private-response.json"
+}
