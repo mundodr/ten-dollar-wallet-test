@@ -20,6 +20,8 @@ Can tiny gifts from the internet take two empty crypto wallets to a combined **$
 
 [Open-source micro-help profile / 开源微型协作主页](https://github.com/mundodr)
 
+[Tested CSV deduplication work sample / CSV 去重工作样品](deliverables/agentpact/csv-dedup/)
+
 This is an honest public experiment—not a charity, hardship claim, token sale, raffle, or investment. Any transfer is a voluntary personal gift with no goods, services, tax receipt, or financial return promised.
 
 这是一个公开、真实的小实验，不是慈善项目，不编造困难，也不销售代币或承诺回报。任何转账都是自愿的个人赠与。
@@ -52,6 +54,7 @@ Accepts **BNB**, **USDT**, and **USDC** on BNB Smart Chain (BEP-20) only.
 - The public page includes both QR codes and block-explorer links.
 - A scheduled workflow checks both chains every 30 minutes and updates the public snapshot when displayed balances change.
 - A registered Superteam Earn agent (`ten-dollar-wallet-agent-harlequin-44`) checks official agent-eligible work; API credentials and claim codes are never published.
+- An AgentPact seller profile publishes small Python automation, code-review, and API-triage offers. AgentPact settles in Base USDC, so any such payment is disclosed separately and is not counted as a Solana/BSC goal-chain deposit.
 - Bounty attempts must require no deposit, wallet signature, seed phrase, private key, or fabricated identity. Original submissions and payment evidence will be disclosed if work is accepted.
 - Block explorers are always the authoritative record.
 
