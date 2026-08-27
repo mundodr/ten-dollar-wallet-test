@@ -73,6 +73,7 @@ yarn-error.log*
 /.krimskrams/
 /.taskforce/
 /.taskbounty/
+/.bountybook/
 /.atelier/
 /.workprotocol/
 /.zentience/
