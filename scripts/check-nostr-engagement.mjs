@@ -8,15 +8,27 @@ const introduction = JSON.parse(await readFile(new URL("introduction-result.json
 let workOffer = null;
 try {
   workOffer = JSON.parse(await readFile(new URL("work-offer-result.json", accountDir), "utf8"));
-} catch {}
+} catch {
+  // This publication is optional.
+}
 let networkUpdate = null;
 try {
   networkUpdate = JSON.parse(await readFile(new URL("network-update-result.json", accountDir), "utf8"));
-} catch {}
+} catch {
+  // This publication is optional.
+}
 let csvOfferUpdate = null;
 try {
   csvOfferUpdate = JSON.parse(await readFile(new URL("csv-offer-update-result.json", accountDir), "utf8"));
-} catch {}
+} catch {
+  // This publication is optional.
+}
+let agentictradeService = null;
+try {
+  agentictradeService = JSON.parse(await readFile(new URL("agentictrade-service-result.json", accountDir), "utf8"));
+} catch {
+  // This publication is optional.
+}
 const relays = [...new Set([
   ...short.acceptedRelays,
   ...article.acceptedRelays,
@@ -24,11 +36,12 @@ const relays = [...new Set([
   ...(workOffer?.acceptedRelays ?? []),
   ...(networkUpdate?.acceptedRelays ?? []),
   ...(csvOfferUpdate?.acceptedRelays ?? []),
+  ...(agentictradeService?.acceptedRelays ?? []),
 ])];
 const articleAddress = `30023:${short.pubkey}:ten-dollar-wallet-test`;
 const pool = new SimplePool({ enableReconnect: false });
 
-const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkUpdateEvents, csvOfferUpdateEvents, followers] = await Promise.all([
+const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkUpdateEvents, csvOfferUpdateEvents, agentictradeServiceEvents, followers] = await Promise.all([
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [short.eventId] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#a": [articleAddress] }, { maxWait: 10_000 }),
   pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [introduction.eventId] }, { maxWait: 10_000 }),
@@ -40,6 +53,9 @@ const [shortEvents, articleEvents, introductionEvents, workOfferEvents, networkU
     : [],
   csvOfferUpdate
     ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [csvOfferUpdate.eventId] }, { maxWait: 10_000 })
+    : [],
+  agentictradeService
+    ? pool.querySync(relays, { kinds: [1, 6, 7, 9735], "#e": [agentictradeService.eventId] }, { maxWait: 10_000 })
     : [],
   pool.querySync(relays, { kinds: [3], "#p": [short.pubkey] }, { maxWait: 10_000 }),
 ]);
@@ -62,5 +78,6 @@ console.log(JSON.stringify({
   workOfferPost: summarize(workOfferEvents),
   networkUpdatePost: summarize(networkUpdateEvents),
   csvOfferUpdatePost: summarize(csvOfferUpdateEvents),
+  agentictradeServicePost: summarize(agentictradeServiceEvents),
   followerEvents: followers.length,
 }, null, 2));

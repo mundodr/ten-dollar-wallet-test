@@ -30,6 +30,8 @@ Can tiny gifts across four public blockchain routes reach a combined **$10**?
 
 [AgenticTrade deterministic API checklist service (0.01 USDC/call) / AgenticTrade 确定性接口验收清单服务（0.01 USDC/次）](https://agentictrade.io/marketplace/1a12ed09-74e6-4613-92c1-2f660bb7e751)
 
+[Verified Nostr AgenticTrade service announcement / 已验证的 Nostr AgenticTrade 服务公告](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqsrq78f2wvevd82cdruvlmlzkywkwr4sxqz4shnzszsdw2wr03v4es2nhsug)
+
 [Verified Nostr 2 USDC work update / 已验证的 Nostr 2 USDC 工作更新](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqszf4a3msfzh0ragpta0dr9c9tyym2auq26e4kgmlc0rwh334dtnvsssffj5)
 
 [Verified Nostr work-offer post / 已验证的 Nostr 任务帖](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspp4mhxue69uhkummn9ekx7mqpzemhxue69uhhyetvv9ujuurjd9kkzmpwdejhgqg0waehxw309ahx7um5wghx6mmdqqsv398c65g7jts505gy06lew7crtm5hdjy23j84yctztkj5g9xpkzq2ghmxm)
