@@ -13,6 +13,7 @@ const [challengeResponse, detailResponse] = await Promise.all([
 ]);
 const challenge = await challengeResponse.json().catch(() => null);
 const detail = await detailResponse.json().catch(() => null);
+const directoryRateLimited = detailResponse.status === 429;
 const payment = challenge?.accepts?.[0];
 const indexedPayment = detail?.accepts?.[0];
 const challengeExact =
@@ -37,7 +38,9 @@ console.log(
       checkedAt: new Date().toISOString(),
       endpointId: detail?.id ?? null,
       endpointUrl,
-      registered: detailResponse.ok,
+      directoryHttpStatus: detailResponse.status,
+      directoryRateLimited,
+      registered: detailResponse.ok ? true : directoryRateLimited ? null : false,
       challengeExact,
       indexExact,
       priceUsd: detail?.price_usd ?? null,
@@ -60,6 +63,10 @@ console.log(
   ),
 );
 
-if (!challengeExact || !indexExact) {
+if (
+  !challengeExact ||
+  (!detailResponse.ok && !directoryRateLimited) ||
+  (detailResponse.ok && !indexExact)
+) {
   throw new Error("x402dash listing or live x402 terms do not match the target");
 }
