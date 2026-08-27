@@ -1,0 +1,148 @@
+openapi: 3.1.0
+info:
+  title: Ten Dollar Wallet Progress API
+  version: 1.0.0
+  description: >-
+    A read-only endpoint that combines confirmed public balances from Solana,
+    BNB Smart Chain, Base, and TRON with a dated USD estimate. Failed upstream
+    balance calls are represented as zero so the response shape stays stable.
+servers:
+  - url: "{origin}"
+    description: A running checkout of the public project
+    variables:
+      origin:
+        default: http://localhost:3000
+paths:
+  /api/progress:
+    get:
+      operationId: getWalletProgress
+      summary: Read the current four-network progress snapshot
+      description: >-
+        Returns native-asset and supported stablecoin balances, the price inputs
+        used for estimation, the aggregate USD value, progress toward the ten
+        dollar target, and the UTC generation timestamp.
+      tags:
+        - Progress
+      responses:
+        "200":
+          description: Current balance and valuation snapshot
+          headers:
+            Cache-Control:
+              description: Public response caching policy.
+              schema:
+                type: string
+              example: public, max-age=30, s-maxage=60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressSnapshot"
+              example:
+                balances:
+                  sol: 0
+                  solUsdc: 0
+                  bnb: 0
+                  bscUsdt: 0
+                  bscUsdc: 0
+                  baseEth: 0.000005
+                  baseUsdc: 0
+                  trx: 0
+                  tronUsdt: 0
+                prices:
+                  sol: 77.97
+                  bnb: 709.65
+                  eth: 2390
+                  trx: 0.31
+                  estimated: true
+                usdTotal: 0.01195
+                percent: 0.1195
+                updatedAt: "2026-08-27T18:30:00.000Z"
+components:
+  schemas:
+    ProgressSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - balances
+        - prices
+        - usdTotal
+        - percent
+        - updatedAt
+      properties:
+        balances:
+          $ref: "#/components/schemas/Balances"
+        prices:
+          $ref: "#/components/schemas/Prices"
+        usdTotal:
+          type: number
+          minimum: 0
+          description: Aggregate USD estimate across all represented assets.
+        percent:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Progress toward the ten dollar target, capped at 100.
+        updatedAt:
+          type: string
+          format: date-time
+          description: UTC time when this response was generated.
+    Balances:
+      type: object
+      additionalProperties: false
+      required:
+        - sol
+        - solUsdc
+        - bnb
+        - bscUsdt
+        - bscUsdc
+        - baseEth
+        - baseUsdc
+        - trx
+        - tronUsdt
+      properties:
+        sol:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        solUsdc:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        bnb:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        bscUsdt:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        bscUsdc:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        baseEth:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        baseUsdc:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        trx:
+          $ref: "#/components/schemas/NonNegativeAmount"
+        tronUsdt:
+          $ref: "#/components/schemas/NonNegativeAmount"
+    Prices:
+      type: object
+      additionalProperties: false
+      required:
+        - sol
+        - bnb
+        - eth
+        - trx
+        - estimated
+      properties:
+        sol:
+          $ref: "#/components/schemas/PositivePrice"
+        bnb:
+          $ref: "#/components/schemas/PositivePrice"
+        eth:
+          $ref: "#/components/schemas/PositivePrice"
+        trx:
+          $ref: "#/components/schemas/PositivePrice"
+        estimated:
+          type: boolean
+          description: True when the endpoint used its explicit fallback prices.
+    NonNegativeAmount:
+      type: number
+      minimum: 0
+      description: Public-chain balance in the asset's display unit.
+    PositivePrice:
+      type: number
+      exclusiveMinimum: 0
+      description: USD price used for the response valuation.

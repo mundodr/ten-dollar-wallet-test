@@ -1,0 +1,39 @@
+{
+  "summary": "A pinned Sourcey build turned the real progress endpoint contract into reproducible static documentation with dated primary-source checks.",
+  "profile_url": "https://medium.com/@ten-dollar-wallet-lab",
+  "account_created_at": "2026-08-27T18:36:00.000Z",
+  "prior_post_count": 0,
+  "public_url": null,
+  "generated_demo_url": "https://mundodr.github.io/ten-dollar-wallet-test/sourcey-wallet-progress/",
+  "checked_at": "2026-08-27T18:30:00.000Z",
+  "observations": [
+    {
+      "fact": "Sourcey accepted the project's OpenAPI 3.1 YAML input and its official guide listed native OpenAPI 3.0, 3.1, and 3.2 support.",
+      "sourcey_url": "https://sourcey.com/docs/openapi-integration",
+      "offer_id": null,
+      "quoted_value": "OpenAPI 3.0, 3.1, and 3.2 native support; Swagger 2.0 converted during build",
+      "checked_at": "2026-08-27T18:30:00.000Z"
+    },
+    {
+      "fact": "The generated operation included cURL, JavaScript, and Python examples, matching the documented default code-sample set.",
+      "sourcey_url": "https://sourcey.com/docs/openapi-integration",
+      "offer_id": null,
+      "quoted_value": "Default code samples: cURL, JavaScript, and Python",
+      "checked_at": "2026-08-27T18:30:00.000Z"
+    },
+    {
+      "fact": "A single build emitted static HTML, search assets, llms.txt, and llms-full.txt from the same OpenAPI source.",
+      "sourcey_url": "https://sourcey.com/docs/introduction",
+      "offer_id": null,
+      "quoted_value": "Static output with portable llms.txt and llms-full.txt context files",
+      "checked_at": "2026-08-27T18:30:00.000Z"
+    },
+    {
+      "fact": "The official repository identified Sourcey as AGPL-3.0 licensed on the checked date.",
+      "sourcey_url": "https://github.com/sourcey/sourcey",
+      "offer_id": null,
+      "quoted_value": "AGPL-3.0",
+      "checked_at": "2026-08-27T18:30:00.000Z"
+    }
+  ]
+}

@@ -23,7 +23,6 @@ const opportunities = (body.board.open_bounties ?? [])
   .filter((bounty) => bounty.funded === true)
   .filter((bounty) => bounty.work_status === "open")
   .filter((bounty) => Number(bounty.price_usd) > 0)
-  .filter((bounty) => Number(bounty.price_usd) <= 10)
   .filter((bounty) => Number(bounty.claim_slots?.available ?? 0) > 0)
   .map((bounty) => ({
     number: bounty.number,
@@ -35,6 +34,7 @@ const opportunities = (body.board.open_bounties ?? [])
     claimState: bounty.actions?.claim?.state ?? null,
     claimRequires: bounty.actions?.claim?.requires ?? [],
     claimReason: bounty.actions?.claim?.reason ?? null,
+    requiredArtifacts: bounty.required_artifacts ?? [],
   }));
 
 console.log(

@@ -5,6 +5,7 @@
 **/node_modules/
 /deliverables/taskmarket/TSK-E4RXQS7X/death-gym/
 /deliverables/taskmarket/TSK-WAN8H9G1/project/
+/deliverables/frantic/127-sourcey-article/dist/
 /.pnp
 .pnp.*
 .yarn/*
@@ -72,4 +73,5 @@ yarn-error.log*
 /.workprotocol/
 /.zentience/
 /.agentbounties/
+/.devto/
 /profile-mundodr/

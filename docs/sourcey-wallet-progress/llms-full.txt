@@ -1,0 +1,31 @@
+# Ten Dollar Wallet Progress API
+
+A read-only endpoint that combines confirmed public balances from Solana, BNB Smart Chain, Base, and TRON with a dated USD estimate. Failed upstream balance calls are represented as zero so the response shape stays stable.
+
+## API Reference
+
+### Ten Dollar Wallet Progress API
+
+Path: `/api.html`
+Version: 1.0.0
+
+A read-only endpoint that combines confirmed public balances from Solana, BNB Smart Chain, Base, and TRON with a dated USD estimate. Failed upstream balance calls are represented as zero so the response shape stays stable.
+
+#### Operations
+
+##### GET /api/progress
+
+Summary: Read the current four-network progress snapshot
+
+Returns native-asset and supported stablecoin balances, the price inputs used for estimation, the aggregate USD value, progress toward the ten dollar target, and the UTC generation timestamp.
+
+Responses:
+- 200: Current balance and valuation snapshot
+
+#### Models
+
+- ProgressSnapshot
+- Balances
+- Prices
+- NonNegativeAmount: Public-chain balance in the asset's display unit.
+- PositivePrice: USD price used for the response valuation.
