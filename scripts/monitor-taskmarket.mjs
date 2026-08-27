@@ -37,6 +37,16 @@ const trackedItems = [
     submitTxHash:
       "0xa998491c0276dbf3ea82541ef8829536bb5343738a5afcbb62e001b3d1148e77",
   },
+  {
+    taskId:
+      "0x0f50fb11e2c983117a758986f8f6808f5959ec7abfca596cef74ca67f863dbdc",
+    submissionId: "38d12cc8-6730-4a11-82e0-5d1bf24dde51",
+    submittedAt: "2026-08-27T16:33:39.714Z",
+    deliverableHash:
+      "0x5ee007b1a0bfd374c359b5cd297536472a7bffed63aebf78a6597132d4bfcee1",
+    submitTxHash:
+      "0xbdbf33ff82fbc1a8b7891ac7012bd41060701b99d1ecf2997d6d27bfe60232df",
+  },
 ];
 
 async function fetchJson(pathname, attempts = 4) {
@@ -180,7 +190,7 @@ console.log(
       nextAction:
         Number(balance.balanceBaseUnits ?? 0) > 0
           ? "Withdraw earned USDC to the pre-approved Base target and verify the target-chain transfer."
-          : "Monitor the submitted survey and new funded, no-stake opportunities.",
+          : "Monitor all six funded submissions and new no-stake opportunities.",
       countingPolicy:
         "Taskmarket balances, submissions, and awards do not count until a matching Base transfer reaches the target address.",
     },
