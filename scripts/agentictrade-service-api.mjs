@@ -3,6 +3,7 @@ import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { Worker } from "node:worker_threads";
 
 const maxBodyBytes = 64 * 1024;
 const defaultPayanX402Url =
@@ -22,8 +23,11 @@ export const x402ApisProvider = {
     "https://simply-technician-crowd-newton.trycloudflare.com/x402apis",
   chains: ["solana"],
   prices: {
+    "codex.regex_check": 0.0015,
+    "codex.goal_status": 0.0005,
     "codex.json_shape": 0.005,
     "codex.summarize": 0.005,
+    "codex.code_review": 0.04,
     "codex.api_acceptance": 0.01,
   },
 };
@@ -328,6 +332,156 @@ export function compileExtractiveSummary(value, requestedMaxChars = 480) {
     summary_chars: summary.length,
     truncated: true,
     method: "deterministic_extractive",
+  };
+}
+
+export async function runBoundedRegex({ pattern, text, flags = "" }) {
+  if (typeof pattern !== "string" || !pattern || pattern.length > 256) {
+    throw new TypeError("pattern must contain 1-256 characters");
+  }
+  if (typeof text !== "string" || text.length > 20_000) {
+    throw new TypeError("text must be a string of at most 20,000 characters");
+  }
+  if (typeof flags !== "string" || !/^[imsu]*$/.test(flags)) {
+    throw new TypeError("flags may contain only i, m, s, or u without duplicates");
+  }
+  if (new Set(flags).size !== flags.length) {
+    throw new TypeError("flags must not contain duplicates");
+  }
+  const workerSource = `
+    const { parentPort, workerData } = require("node:worker_threads");
+    try {
+      const expression = new RegExp(workerData.pattern, workerData.flags + "g");
+      const matches = [];
+      let match;
+      while (matches.length < 100 && (match = expression.exec(workerData.text))) {
+        matches.push({ index: match.index, match: match[0], groups: match.slice(1, 21) });
+        if (match[0] === "") expression.lastIndex += 1;
+      }
+      parentPort.postMessage({ ok: true, matches });
+    } catch (error) {
+      parentPort.postMessage({ ok: false, error: error.message });
+    }
+  `;
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(workerSource, {
+      eval: true,
+      workerData: { pattern, text, flags },
+    });
+    const timer = setTimeout(() => {
+      worker.terminate();
+      reject(new Error("regex_execution_timeout"));
+    }, 250);
+    worker.once("message", (result) => {
+      clearTimeout(timer);
+      worker.terminate();
+      if (!result?.ok) reject(new TypeError(result?.error ?? "invalid_regex"));
+      else {
+        resolve({
+          matched: result.matches.length > 0,
+          match_count: result.matches.length,
+          matches: result.matches,
+          capped: result.matches.length === 100,
+          timeout_ms: 250,
+        });
+      }
+    });
+    worker.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
+}
+
+export function compileGoalStatus(value) {
+  const current = Number(value?.current);
+  const target = Number(value?.target);
+  if (!Number.isFinite(current) || current < 0) {
+    throw new TypeError("current must be a non-negative finite number");
+  }
+  if (!Number.isFinite(target) || target <= 0) {
+    throw new TypeError("target must be a positive finite number");
+  }
+  const percent = (current / target) * 100;
+  return {
+    label: typeof value?.label === "string" ? value.label.slice(0, 200) : null,
+    current,
+    target,
+    unit: typeof value?.unit === "string" ? value.unit.slice(0, 32) : null,
+    remaining: Math.max(0, target - current),
+    percent: Number(percent.toFixed(4)),
+    status: current >= target ? "complete" : "in_progress",
+  };
+}
+
+export function compileStaticCodeReview(value) {
+  const code = typeof value === "string" ? value : value?.code;
+  if (typeof code !== "string" || !code.trim() || code.length > 20_000) {
+    throw new TypeError("code must contain 1-20,000 characters");
+  }
+  const findings = [];
+  const rules = [
+    {
+      id: "dynamic-code-execution",
+      severity: "high",
+      expression: /\b(?:eval|Function)\s*\(/,
+      message: "Dynamic code execution is present; remove it or strictly isolate trusted input.",
+    },
+    {
+      id: "shell-execution",
+      severity: "high",
+      expression: /\b(?:exec|execSync|spawn|spawnSync)\s*\(/,
+      message: "Process execution is present; use fixed commands and reject user-controlled arguments.",
+    },
+    {
+      id: "embedded-secret",
+      severity: "high",
+      expression:
+        /\b(?:api[_-]?key|secret|token|password)\b\s*[:=]\s*["'][^"']{8,}["']/i,
+      message: "A credential-like literal appears embedded in source; load secrets from protected runtime configuration.",
+    },
+    {
+      id: "empty-catch",
+      severity: "medium",
+      expression: /catch\s*(?:\([^)]*\))?\s*\{\s*\}/,
+      message: "An empty catch block can hide failures; record or propagate a bounded diagnostic.",
+    },
+    {
+      id: "unbounded-network-call",
+      severity: "medium",
+      expression: /\bfetch\s*\(/,
+      message: "Review this network call for an explicit timeout, response-size bound, and status validation.",
+    },
+  ];
+  for (const [index, line] of code.split("\n").entries()) {
+    for (const rule of rules) {
+      if (rule.expression.test(line)) {
+        findings.push({
+          id: `${rule.id}-${index + 1}`,
+          rule: rule.id,
+          severity: rule.severity,
+          line: index + 1,
+          evidence: line.trim().slice(0, 240),
+          message: rule.message,
+        });
+      }
+    }
+    if (findings.length >= 50) break;
+  }
+  const severityCounts = Object.fromEntries(
+    ["high", "medium", "low"].map((severity) => [
+      severity,
+      findings.filter((finding) => finding.severity === severity).length,
+    ]),
+  );
+  return {
+    methodology: "bounded_deterministic_static_heuristics",
+    reviewed_lines: code.split("\n").length,
+    finding_count: findings.length,
+    severity_counts: severityCounts,
+    findings,
+    limitations:
+      "This is a fast heuristic review, not a proof of security or a substitute for tests and human review.",
   };
 }
 
@@ -735,12 +889,17 @@ export function createHandler({
             mint: solanaUsdcMint,
           });
         }
-        if (!(await consumeX402ApisPayment(payment))) {
-          return sendJson(response, 409, { error: "payment_already_consumed" });
-        }
 
         let data;
-        if (api === "codex.json_shape") {
+        if (api === "codex.regex_check") {
+          data = await runBoundedRegex({
+            pattern: params.pattern,
+            text: params.text,
+            flags: params.flags ?? "",
+          });
+        } else if (api === "codex.goal_status") {
+          data = compileGoalStatus(params);
+        } else if (api === "codex.json_shape") {
           data = compileJsonShape(
             Object.hasOwn(params, "input") ? params.input : params,
           );
@@ -749,10 +908,15 @@ export function createHandler({
             params.input ?? params.text ?? params,
             Number(params.max_chars ?? 480),
           );
+        } else if (api === "codex.code_review") {
+          data = compileStaticCodeReview(params);
         } else {
           data = compileAcceptanceCriteria(
             params.input ?? params.brief ?? params.requirements ?? params,
           );
+        }
+        if (!(await consumeX402ApisPayment(payment))) {
+          return sendJson(response, 409, { error: "payment_already_consumed" });
         }
         x402ApisStats.requestsServed += 1;
         x402ApisStats.totalEarnings += price;

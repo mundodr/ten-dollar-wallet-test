@@ -10,8 +10,11 @@ import {
   compileJsonShape,
   compileExtractiveSummary,
   compileAcceptanceCriteria,
+  compileGoalStatus,
+  compileStaticCodeReview,
   createPaymentConsumer,
   createHandler,
+  runBoundedRegex,
   verifySolanaUsdcPayment,
   x402BazaarExtension,
   x402ApisProvider,
@@ -84,14 +87,70 @@ test("summarizes text with a bounded deterministic extract", () => {
   assert.ok(result.original_chars > result.summary_chars);
 });
 
+test("runs regular expressions in a bounded worker", async () => {
+  const result = await runBoundedRegex({
+    pattern: "order-[0-9]+",
+    text: "order-12 and order-34",
+    flags: "i",
+  });
+  assert.equal(result.matched, true);
+  assert.equal(result.match_count, 2);
+  assert.deepEqual(
+    result.matches.map((match) => match.match),
+    ["order-12", "order-34"],
+  );
+  await assert.rejects(
+    runBoundedRegex({
+      pattern: "^(a+)+$",
+      text: `${"a".repeat(19_999)}!`,
+    }),
+    /regex_execution_timeout/,
+  );
+});
+
+test("computes a goal status without redefining completion", () => {
+  assert.deepEqual(
+    compileGoalStatus({ current: 2.5, target: 10, unit: "USDC" }),
+    {
+      label: null,
+      current: 2.5,
+      target: 10,
+      unit: "USDC",
+      remaining: 7.5,
+      percent: 25,
+      status: "in_progress",
+    },
+  );
+  assert.equal(compileGoalStatus({ current: 12, target: 10 }).status, "complete");
+});
+
+test("returns evidence-backed bounded static code findings", () => {
+  const result = compileStaticCodeReview({
+    code: [
+      "const token = 'abcdefghijk';",
+      "fetch(userUrl);",
+      "try { work(); } catch {}",
+    ].join("\n"),
+  });
+  assert.equal(result.methodology, "bounded_deterministic_static_heuristics");
+  assert.ok(result.findings.some((finding) => finding.rule === "embedded-secret"));
+  assert.ok(
+    result.findings.some((finding) => finding.rule === "unbounded-network-call"),
+  );
+  assert.ok(result.findings.every((finding) => Number.isInteger(finding.line)));
+});
+
 test("publishes direct Solana USDC provider terms", () => {
   assert.equal(
     x402ApisProvider.wallet,
     "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt",
   );
   assert.deepEqual(x402ApisProvider.chains, ["solana"]);
+  assert.equal(x402ApisProvider.prices["codex.regex_check"], 0.0015);
+  assert.equal(x402ApisProvider.prices["codex.goal_status"], 0.0005);
   assert.equal(x402ApisProvider.prices["codex.json_shape"], 0.005);
   assert.equal(x402ApisProvider.prices["codex.summarize"], 0.005);
+  assert.equal(x402ApisProvider.prices["codex.code_review"], 0.04);
   assert.equal(x402ApisProvider.prices["codex.api_acceptance"], 0.01);
 });
 
