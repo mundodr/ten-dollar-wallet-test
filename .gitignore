@@ -67,6 +67,7 @@ yarn-error.log*
 /.archtools/
 /.datapointmarket/
 /.agentworld/
+/.x402apis/
 /.agentwork/
 /.frantic/
 /.krimskrams/

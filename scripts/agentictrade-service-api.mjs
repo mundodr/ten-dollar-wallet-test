@@ -9,6 +9,24 @@ const defaultPayanX402Url =
   "https://payanagent.com/x402/kh7ezjzt4etk8x1s908z7wngqn8d89hx";
 const defaultPublicX402Url =
   "https://simply-technician-crowd-newton.trycloudflare.com/x402";
+const solanaTargetWallet =
+  "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt";
+const solanaUsdcMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const defaultSolanaRpcUrl = "https://api.mainnet-beta.solana.com";
+const x402ApisRegistryUrl = "https://www.x402apis.io/api";
+
+export const x402ApisProvider = {
+  providerId: solanaTargetWallet,
+  wallet: solanaTargetWallet,
+  publicUrl:
+    "https://simply-technician-crowd-newton.trycloudflare.com/x402apis",
+  chains: ["solana"],
+  prices: {
+    "codex.json_shape": 0.005,
+    "codex.summarize": 0.005,
+    "codex.api_acceptance": 0.01,
+  },
+};
 
 export const x402BazaarExtension = {
   info: {
@@ -244,6 +262,189 @@ export function compileAcceptanceCriteria(value) {
   };
 }
 
+function describeJsonShape(value, depth = 0) {
+  if (depth > 24) return { type: "depth_limit" };
+  if (value === null) return { type: "null" };
+  if (Array.isArray(value)) {
+    const itemTypes = [...new Set(value.map((item) =>
+      item === null ? "null" : Array.isArray(item) ? "array" : typeof item,
+    ))].sort();
+    return {
+      type: "array",
+      length: value.length,
+      item_types: itemTypes,
+      ...(value.length > 0
+        ? { first_item_shape: describeJsonShape(value[0], depth + 1) }
+        : {}),
+    };
+  }
+  if (typeof value === "object") {
+    return {
+      type: "object",
+      properties: Object.fromEntries(
+        Object.keys(value)
+          .sort()
+          .map((key) => [key, describeJsonShape(value[key], depth + 1)]),
+      ),
+    };
+  }
+  return { type: typeof value };
+}
+
+export function compileJsonShape(value) {
+  return {
+    deterministic: true,
+    shape: describeJsonShape(value),
+  };
+}
+
+export function compileExtractiveSummary(value, requestedMaxChars = 480) {
+  const text = cleanBrief(value);
+  if (!text) throw new TypeError("input must contain non-empty text");
+  const maxChars = Math.min(
+    2_000,
+    Math.max(80, Number.isFinite(requestedMaxChars) ? requestedMaxChars : 480),
+  );
+  if (text.length <= maxChars) {
+    return {
+      summary: text,
+      original_chars: text.length,
+      summary_chars: text.length,
+      truncated: false,
+      method: "deterministic_extractive",
+    };
+  }
+  const sentences = text.match(/[^.!?。！？]+[.!?。！？]?/g) ?? [text];
+  let summary = "";
+  for (const sentence of sentences) {
+    const candidate = `${summary}${sentence}`.trim();
+    if (candidate.length > maxChars) break;
+    summary = candidate;
+  }
+  if (!summary) summary = `${text.slice(0, Math.max(1, maxChars - 3)).trimEnd()}...`;
+  return {
+    summary,
+    original_chars: text.length,
+    summary_chars: summary.length,
+    truncated: true,
+    method: "deterministic_extractive",
+  };
+}
+
+async function solanaRpc(fetchImpl, rpcUrl, method, params) {
+  const response = await fetchImpl(rpcUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+    signal: AbortSignal.timeout(25_000),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || body?.error) {
+    throw new Error(`solana_rpc_error:${body?.error?.message ?? response.status}`);
+  }
+  return body?.result ?? null;
+}
+
+function parsedTokenInstructions(transaction) {
+  const topLevel = transaction?.transaction?.message?.instructions ?? [];
+  const inner = (transaction?.meta?.innerInstructions ?? []).flatMap(
+    (entry) => entry?.instructions ?? [],
+  );
+  return [...topLevel, ...inner].filter(
+    (instruction) =>
+      instruction?.program === "spl-token" &&
+      ["transfer", "transferChecked"].includes(instruction?.parsed?.type),
+  );
+}
+
+export async function verifySolanaUsdcPayment(
+  signature,
+  minimumUsdc,
+  {
+    fetchImpl = fetch,
+    rpcUrl = defaultSolanaRpcUrl,
+    targetWallet = solanaTargetWallet,
+  } = {},
+) {
+  if (typeof signature !== "string" || !/^[1-9A-HJ-NP-Za-km-z]{64,96}$/.test(signature)) {
+    return { valid: false, error: "invalid_transaction_signature" };
+  }
+  const transaction = await solanaRpc(fetchImpl, rpcUrl, "getTransaction", [
+    signature,
+    {
+      encoding: "jsonParsed",
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0,
+    },
+  ]);
+  if (!transaction || transaction?.meta?.err) {
+    return { valid: false, error: "transaction_missing_or_failed" };
+  }
+
+  for (const instruction of parsedTokenInstructions(transaction)) {
+    const info = instruction.parsed.info ?? {};
+    const rawAmount = info.tokenAmount?.amount ?? info.amount;
+    if (!info.destination || !/^\d+$/.test(String(rawAmount ?? ""))) continue;
+    if (info.mint && info.mint !== solanaUsdcMint) continue;
+
+    const account = await solanaRpc(fetchImpl, rpcUrl, "getAccountInfo", [
+      info.destination,
+      { encoding: "jsonParsed", commitment: "confirmed" },
+    ]);
+    const tokenInfo = account?.value?.data?.parsed?.info;
+    if (
+      tokenInfo?.owner !== targetWallet ||
+      tokenInfo?.mint !== solanaUsdcMint
+    ) {
+      continue;
+    }
+    const amountBaseUnits = BigInt(rawAmount);
+    const minimumBaseUnits = BigInt(Math.ceil(minimumUsdc * 1_000_000));
+    if (amountBaseUnits < minimumBaseUnits) continue;
+    return {
+      valid: true,
+      signature,
+      amountBaseUnits: amountBaseUnits.toString(),
+      amountUsdc: Number(amountBaseUnits) / 1_000_000,
+      from: info.authority ?? null,
+      destination: info.destination,
+      targetWallet,
+      mint: solanaUsdcMint,
+    };
+  }
+  return { valid: false, error: "matching_usdc_transfer_not_found" };
+}
+
+export async function createPaymentConsumer(file) {
+  const consumed = new Set();
+  try {
+    const existing = await readFile(file, "utf8");
+    for (const line of existing.split("\n")) {
+      if (!line.trim()) continue;
+      const entry = JSON.parse(line);
+      if (entry?.signature) consumed.add(entry.signature);
+    }
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
+  return async (payment) => {
+    if (consumed.has(payment.signature)) return false;
+    consumed.add(payment.signature);
+    try {
+      await mkdir(path.dirname(file), { recursive: true, mode: 0o700 });
+      await appendFile(
+        file,
+        `${JSON.stringify({ consumedAt: new Date().toISOString(), ...payment })}\n`,
+        { encoding: "utf8", mode: 0o600 },
+      );
+      return true;
+    } catch (error) {
+      consumed.delete(payment.signature);
+      throw error;
+    }
+  };
+}
+
 function sendJson(response, status, body, headers = {}) {
   const encoded = JSON.stringify(body);
   response.writeHead(status, {
@@ -464,6 +665,15 @@ export function createHandler({
   publicX402Url = defaultPublicX402Url,
   agentPactWebhookSecret = null,
   recordAgentPactWebhook = null,
+  verifyX402ApisPayment = (signature, minimumUsdc) =>
+    verifySolanaUsdcPayment(signature, minimumUsdc, { fetchImpl }),
+  consumeX402ApisPayment = async () => true,
+  x402ApisStats = {
+    startedAt: Date.now(),
+    requestsServed: 0,
+    totalEarnings: 0,
+    errors: 0,
+  },
 } = {}) {
   return async (request, response) => {
     const pathname = new URL(request.url, "http://localhost").pathname;
@@ -475,6 +685,97 @@ export function createHandler({
       pathname === "/.well-known/x402-service.json"
     ) {
       return sendJson(response, 200, x402ServiceManifest);
+    }
+    if (request.method === "GET" && pathname === "/x402apis/health") {
+      return sendJson(response, 200, {
+        status: "ok",
+        apis: Object.keys(x402ApisProvider.prices),
+        wallet: x402ApisProvider.wallet,
+        chains: x402ApisProvider.chains,
+        stats: {
+          uptime: Date.now() - x402ApisStats.startedAt,
+          requestsServed: x402ApisStats.requestsServed,
+          totalEarnings: x402ApisStats.totalEarnings,
+        },
+      });
+    }
+    if (pathname === "/x402apis/call") {
+      if (request.method !== "POST") {
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      }
+      const startedAt = Date.now();
+      try {
+        const raw = (await readRequestBody(request)).toString("utf8");
+        const body = JSON.parse(raw || "{}");
+        const api = body?.api;
+        const params = body?.params;
+        const price = x402ApisProvider.prices[api];
+        if (typeof price !== "number") {
+          return sendJson(response, 404, { error: "api_not_found" });
+        }
+        if (!params || typeof params !== "object" || Array.isArray(params)) {
+          return sendJson(response, 400, { error: "invalid_params" });
+        }
+        if ((request.headers["x-payment-chain"] ?? "solana") !== "solana") {
+          return sendJson(response, 400, {
+            error: "unsupported_chain",
+            supported: ["solana"],
+          });
+        }
+        const signature = request.headers["x-payment"];
+        const payment = await verifyX402ApisPayment(signature, price);
+        if (!payment?.valid) {
+          return sendJson(response, 402, {
+            error: "payment_required",
+            message: payment?.error ?? "valid Solana USDC transaction required",
+            api,
+            price,
+            chain: "solana",
+            wallet: x402ApisProvider.wallet,
+            mint: solanaUsdcMint,
+          });
+        }
+        if (!(await consumeX402ApisPayment(payment))) {
+          return sendJson(response, 409, { error: "payment_already_consumed" });
+        }
+
+        let data;
+        if (api === "codex.json_shape") {
+          data = compileJsonShape(
+            Object.hasOwn(params, "input") ? params.input : params,
+          );
+        } else if (api === "codex.summarize") {
+          data = compileExtractiveSummary(
+            params.input ?? params.text ?? params,
+            Number(params.max_chars ?? 480),
+          );
+        } else {
+          data = compileAcceptanceCriteria(
+            params.input ?? params.brief ?? params.requirements ?? params,
+          );
+        }
+        x402ApisStats.requestsServed += 1;
+        x402ApisStats.totalEarnings += price;
+        return sendJson(response, 200, {
+          data,
+          requestId: `tdw-${payment.signature.slice(0, 16)}`,
+          latency: Date.now() - startedAt,
+          cost: price,
+          timestamp: new Date().toISOString(),
+          payment: {
+            signature: payment.signature,
+            amountUsdc: payment.amountUsdc,
+            recipient: x402ApisProvider.wallet,
+            mint: solanaUsdcMint,
+          },
+        });
+      } catch (error) {
+        x402ApisStats.errors += 1;
+        return sendJson(response, error.statusCode ?? 400, {
+          error: "invalid_request",
+          message: error.message,
+        });
+      }
     }
     if (
       pathname === "/x402" &&
@@ -554,10 +855,43 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       { encoding: "utf8", mode: 0o600 },
     );
   };
+  const x402ApisStats = {
+    startedAt: Date.now(),
+    requestsServed: 0,
+    totalEarnings: 0,
+    errors: 0,
+  };
+  const consumeX402ApisPayment = await createPaymentConsumer(
+    path.resolve(".x402apis/consumed-payments.ndjson"),
+  );
   const server = createServer(
-    createHandler({ agentPactWebhookSecret, recordAgentPactWebhook }),
+    createHandler({
+      agentPactWebhookSecret,
+      recordAgentPactWebhook,
+      consumeX402ApisPayment,
+      x402ApisStats,
+    }),
   );
   server.listen(port, "127.0.0.1", () => {
     console.log(JSON.stringify({ ready: true, host: "127.0.0.1", port }));
   });
+  const heartbeat = async () => {
+    try {
+      await fetch(`${x402ApisRegistryUrl}/heartbeat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providerId: x402ApisProvider.providerId,
+          latency: 0,
+          requestsServed: x402ApisStats.requestsServed,
+          errors: x402ApisStats.errors,
+          timestamp: new Date().toISOString(),
+        }),
+        signal: AbortSignal.timeout(20_000),
+      });
+    } catch (error) {
+      console.error(`x402apis heartbeat failed: ${error.message}`);
+    }
+  };
+  setInterval(heartbeat, 60_000).unref();
 }

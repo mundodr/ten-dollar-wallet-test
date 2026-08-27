@@ -1,12 +1,20 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
 import { createServer } from "node:http";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 
 import {
+  compileJsonShape,
+  compileExtractiveSummary,
   compileAcceptanceCriteria,
+  createPaymentConsumer,
   createHandler,
+  verifySolanaUsdcPayment,
   x402BazaarExtension,
+  x402ApisProvider,
   x402ServiceManifest,
 } from "../scripts/agentictrade-service-api.mjs";
 
@@ -55,6 +63,174 @@ test("returns Chinese checklist text for a Chinese brief", () => {
 
 test("rejects an empty brief", () => {
   assert.throws(() => compileAcceptanceCriteria("   "), /non-empty/);
+});
+
+test("describes JSON shapes deterministically", () => {
+  const result = compileJsonShape({ z: 1, a: [{ ok: true }] });
+  assert.deepEqual(Object.keys(result.shape.properties), ["a", "z"]);
+  assert.equal(result.shape.properties.a.type, "array");
+  assert.equal(
+    result.shape.properties.a.first_item_shape.properties.ok.type,
+    "boolean",
+  );
+});
+
+test("summarizes text with a bounded deterministic extract", () => {
+  const input = `${"First sentence carries the key fact. ".repeat(6)}Last.`;
+  const result = compileExtractiveSummary(input, 100);
+  assert.equal(result.method, "deterministic_extractive");
+  assert.equal(result.truncated, true);
+  assert.ok(result.summary_chars <= 100);
+  assert.ok(result.original_chars > result.summary_chars);
+});
+
+test("publishes direct Solana USDC provider terms", () => {
+  assert.equal(
+    x402ApisProvider.wallet,
+    "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt",
+  );
+  assert.deepEqual(x402ApisProvider.chains, ["solana"]);
+  assert.equal(x402ApisProvider.prices["codex.json_shape"], 0.005);
+  assert.equal(x402ApisProvider.prices["codex.summarize"], 0.005);
+  assert.equal(x402ApisProvider.prices["codex.api_acceptance"], 0.01);
+});
+
+test("verifies only sufficient official Solana USDC sent to the target", async () => {
+  const signature = "1".repeat(64);
+  const destination = "TargetAssociatedTokenAccount1111111111111111111";
+  const fetchImpl = async (_url, options) => {
+    const request = JSON.parse(options.body);
+    if (request.method === "getTransaction") {
+      return Response.json({
+        jsonrpc: "2.0",
+        id: 1,
+        result: {
+          meta: { err: null, innerInstructions: [] },
+          transaction: {
+            message: {
+              instructions: [
+                {
+                  program: "spl-token",
+                  parsed: {
+                    type: "transferChecked",
+                    info: {
+                      authority: "Buyer1111111111111111111111111111111111111",
+                      destination,
+                      mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+                      tokenAmount: { amount: "10000", decimals: 6 },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      });
+    }
+    assert.equal(request.method, "getAccountInfo");
+    return Response.json({
+      jsonrpc: "2.0",
+      id: 1,
+      result: {
+        value: {
+          data: {
+            parsed: {
+              info: {
+                owner: "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt",
+                mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              },
+            },
+          },
+        },
+      },
+    });
+  };
+
+  const accepted = await verifySolanaUsdcPayment(signature, 0.01, {
+    fetchImpl,
+    rpcUrl: "https://rpc.example",
+  });
+  assert.equal(accepted.valid, true);
+  assert.equal(accepted.amountBaseUnits, "10000");
+  assert.equal(accepted.targetWallet, x402ApisProvider.wallet);
+
+  const insufficient = await verifySolanaUsdcPayment(signature, 0.010001, {
+    fetchImpl,
+    rpcUrl: "https://rpc.example",
+  });
+  assert.deepEqual(insufficient, {
+    valid: false,
+    error: "matching_usdc_transfer_not_found",
+  });
+});
+
+test("x402apis route requires payment and rejects replay", async () => {
+  const consumed = new Set();
+  const verifyX402ApisPayment = async (signature, minimumUsdc) => ({
+    valid: signature === "paid-signature" && minimumUsdc === 0.005,
+    signature,
+    amountUsdc: minimumUsdc,
+  });
+  const consumeX402ApisPayment = async (payment) => {
+    if (consumed.has(payment.signature)) return false;
+    consumed.add(payment.signature);
+    return true;
+  };
+  await withServer(
+    createHandler({ verifyX402ApisPayment, consumeX402ApisPayment }),
+    async (baseUrl) => {
+      const health = await fetch(`${baseUrl}/x402apis/health`);
+      assert.equal(health.status, 200);
+      assert.equal((await health.json()).wallet, x402ApisProvider.wallet);
+
+      const body = JSON.stringify({
+        api: "codex.json_shape",
+        params: { input: { id: 1 } },
+      });
+      const unpaid = await fetch(`${baseUrl}/x402apis/call`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
+      assert.equal(unpaid.status, 402);
+      assert.equal((await unpaid.json()).wallet, x402ApisProvider.wallet);
+
+      const headers = {
+        "Content-Type": "application/json",
+        "X-Payment": "paid-signature",
+        "X-Payment-Chain": "solana",
+      };
+      const paid = await fetch(`${baseUrl}/x402apis/call`, {
+        method: "POST",
+        headers,
+        body,
+      });
+      assert.equal(paid.status, 200);
+      assert.equal((await paid.json()).data.shape.properties.id.type, "number");
+
+      const replay = await fetch(`${baseUrl}/x402apis/call`, {
+        method: "POST",
+        headers,
+        body,
+      });
+      assert.equal(replay.status, 409);
+    },
+  );
+});
+
+test("payment replay protection survives a process restart", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "tdw-x402apis-"));
+  const file = path.join(directory, "consumed.ndjson");
+  const payment = { signature: "persisted-payment", amountUsdc: 0.01 };
+  try {
+    const firstProcess = await createPaymentConsumer(file);
+    assert.equal(await firstProcess(payment), true);
+    assert.equal(await firstProcess(payment), false);
+    const restartedProcess = await createPaymentConsumer(file);
+    assert.equal(await restartedProcess(payment), false);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("accepts an OpenAI-style messages envelope", () => {
