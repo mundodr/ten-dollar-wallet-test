@@ -6,31 +6,50 @@ import { mkdir, open, readFile, readdir, rm, stat, writeFile } from "node:fs/pro
 import path from "node:path";
 
 const root = path.resolve("deliverables/taskmarket/TSK-E4RXQS7X/death-gym");
-const checkpointDir = path.join(root, "local/checkpoints/long-5b");
+const checkpointRuns = [
+  { runName: "long-5b", targetSteps: 5_000_000_000 },
+  { runName: "long-9b", targetSteps: 9_000_000_000 },
+].map((run) => ({
+  ...run,
+  directory: path.join(root, "local/checkpoints", run.runName),
+}));
 const outputDir = path.join(root, "local/evaluations");
 const python = path.join(root, ".venv/bin/python");
 const requested = process.argv[2] || null;
 
 await mkdir(outputDir, { recursive: true });
-const names = (await readdir(checkpointDir).catch((error) => {
-  if (error.code === "ENOENT") return [];
-  throw error;
-}))
-  .filter((name) => name.endsWith(".safetensors"))
-  .sort((a, b) => {
-    const aStep = Number(a.match(/step(\d+)M/)?.[1] ?? (a === "final.safetensors" ? Number.MAX_SAFE_INTEGER : -1));
-    const bStep = Number(b.match(/step(\d+)M/)?.[1] ?? (b === "final.safetensors" ? Number.MAX_SAFE_INTEGER : -1));
-    return bStep - aStep;
+const candidates = [];
+for (const run of checkpointRuns) {
+  const names = await readdir(run.directory).catch((error) => {
+    if (error.code === "ENOENT") return [];
+    throw error;
   });
-const checkpointName = requested || names[0];
-if (!checkpointName) {
+  for (const name of names.filter((item) => item.endsWith(".safetensors"))) {
+    const stepMillions = Number(
+      name.match(/step(\d+)M/)?.[1] ??
+        (name === "final.safetensors" ? run.targetSteps / 1_000_000 : -1),
+    );
+    candidates.push({ ...run, name, stepMillions });
+  }
+}
+candidates.sort((a, b) => b.stepMillions - a.stepMillions);
+const selected = requested
+  ? candidates.find(
+      (candidate) =>
+        `${candidate.runName}/${candidate.name}` === requested ||
+        candidate.name === requested,
+    )
+  : candidates[0];
+if (!selected) {
+  if (requested) throw new Error(`Checkpoint not found: ${requested}`);
   console.log(JSON.stringify({ status: "no-checkpoint" }, null, 2));
   process.exit(0);
 }
-if (!names.includes(checkpointName)) throw new Error(`Checkpoint not found: ${checkpointName}`);
 
-const stem = checkpointName.replace(/\.safetensors$/, "");
-const checkpoint = path.join(checkpointDir, checkpointName);
+const checkpointName = selected.name;
+const baseStem = checkpointName.replace(/\.safetensors$/, "");
+const stem = baseStem === "final" ? `${selected.runName}-final` : baseStem;
+const checkpoint = path.join(selected.directory, checkpointName);
 const archive = path.join(outputDir, `${stem}.zip`);
 const resultFile = path.join(outputDir, `${stem}.json`);
 const transcriptFile = path.join(outputDir, `${stem}.txt`);
@@ -77,7 +96,10 @@ try {
   const archiveBytes = await readFile(archive);
   const result = {
     evaluatedAt: new Date().toISOString(),
+    runName: selected.runName,
     checkpoint: checkpointName,
+    checkpointRelativePath: path.relative(root, checkpoint),
+    completedSteps: Math.round(selected.stepMillions * 1_000_000),
     checkpointSizeBytes: checkpointInfo.size,
     archive: path.relative(root, archive),
     archiveSizeBytes: archiveBytes.length,
@@ -86,7 +108,7 @@ try {
     publicBankSeeds: [3930, 7717, 20477],
     publicBankWorldsPerSeed: 16384,
     validatorPassed: /validated OK/.test(exportOutput),
-    publicLeaderAtRunStartXp: 341.1,
+    publicLeaderAtRunStartXp: 347.4,
   };
   await writeFile(transcriptFile, `${exportOutput}\n${evaluationOutput}`);
   await writeFile(resultFile, `${JSON.stringify(result, null, 2)}\n`);

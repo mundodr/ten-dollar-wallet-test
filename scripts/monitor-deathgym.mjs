@@ -5,21 +5,33 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 const root = path.resolve("deliverables/taskmarket/TSK-E4RXQS7X/death-gym");
-const logFile = path.join(root, "local/logs/long-5b.log");
-const checkpointDir = path.join(root, "local/checkpoints/long-5b");
+const trainingRuns = [
+  {
+    runName: "long-9b",
+    serviceName: "deathgym-taskmarket-9b.service",
+    targetSteps: 9_000_000_000,
+  },
+  {
+    runName: "long-5b",
+    serviceName: "deathgym-taskmarket-5b.service",
+    targetSteps: 5_000_000_000,
+  },
+].map((run) => ({
+  ...run,
+  logFile: path.join(root, "local/logs", `${run.runName}.log`),
+  checkpointDir: path.join(root, "local/checkpoints", run.runName),
+}));
 const evaluationsDir = path.join(root, "local/evaluations");
-const serviceName = "deathgym-taskmarket-5b.service";
-const targetSteps = 5_000_000_000;
+const targetSteps = 9_000_000_000;
 const stepsPerIteration = 65_536;
 const checkpointEverySteps = 250_000_000;
-const minimumNextSubmissionXp = 275.6;
 const taskExpiry = "2026-08-29T21:40:19.006Z";
 const workerAddress = "0xbb8f5dA5e6E14BD221e720D8e1798Fb8A5c7EA71";
 const leaderboardGistId = "545d0b413e31b315a017157339adca9e";
 const leaderboardApi =
   `https://api.github.com/gists/${leaderboardGistId}`;
 
-function serviceProperties() {
+function serviceProperties(serviceName) {
   try {
     const output = execFileSync(
       "systemctl",
@@ -36,6 +48,14 @@ function serviceProperties() {
     return { ActiveState: "unknown", error: error.message };
   }
 }
+
+const services = Object.fromEntries(
+  trainingRuns.map((run) => [run.runName, serviceProperties(run.serviceName)]),
+);
+const activeRun =
+  trainingRuns.find((run) => services[run.runName]?.ActiveState === "active") ??
+  trainingRuns.find((run) => services[run.runName]?.ActiveState !== "unknown") ??
+  trainingRuns.at(-1);
 
 async function filesIn(directory, suffix) {
   try {
@@ -127,17 +147,25 @@ async function publicLeaderboard() {
 }
 
 let log = "";
-try {
-  log = await readFile(logFile, "utf8");
-} catch (error) {
-  if (error.code !== "ENOENT") throw error;
+let logRun = activeRun;
+for (const run of trainingRuns) {
+  try {
+    const candidate = await readFile(run.logFile, "utf8");
+    if (candidate.trim()) {
+      log = candidate;
+      logRun = run;
+      break;
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
 }
 const lines = log.trim().split("\n");
 const progressLines = lines.filter((line) => /^it\s+\d+\/\d+/.test(line.trim()));
 const latestLine = progressLines.at(-1) ?? null;
 const match = latestLine?.match(/it\s+(\d+)\/(\d+).*?fps:\s*(\d+).*?death_xp:\s*(\d+)/);
 const currentIteration = match ? Number(match[1]) : 0;
-const totalIterations = match ? Number(match[2]) : 76_293;
+const totalIterations = Math.floor(targetSteps / stepsPerIteration);
 const fps = match ? Number(match[3]) : null;
 const completedSteps = Math.min(targetSteps, currentIteration * stepsPerIteration);
 const remainingSeconds = fps ? Math.max(0, targetSteps - completedSteps) / fps : null;
@@ -192,11 +220,15 @@ const bestSubmittedXp = submissions.reduce(
   (best, submission) => Math.max(best, Number(submission.publicBankMeanXp) || 0),
   0,
 );
+const minimumNextSubmissionXp = Number((bestSubmittedXp + 3).toFixed(1));
 
 console.log(JSON.stringify({
   checkedAt: new Date().toISOString(),
-  service: serviceProperties(),
+  service: services[activeRun.runName],
+  services,
   progress: {
+    activeRun: activeRun.runName,
+    logRun: logRun.runName,
     currentIteration,
     totalIterations,
     completedSteps,
@@ -241,7 +273,16 @@ console.log(JSON.stringify({
     publicFetchError: leaderboard.publicFetchError,
     error: leaderboard.error,
   },
-  checkpoints: await filesIn(checkpointDir, ".safetensors"),
+  checkpoints: (
+    await Promise.all(
+      trainingRuns.map(async (run) =>
+        (await filesIn(run.checkpointDir, ".safetensors")).map((file) => ({
+          runName: run.runName,
+          ...file,
+        })),
+      ),
+    )
+  ).flat(),
   evaluations,
   submissions,
   countingPolicy: "Training and submissions do not count unless the benchmark is awarded, withdrawn, and transferred to the approved Base target.",
