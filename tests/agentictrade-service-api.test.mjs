@@ -13,7 +13,10 @@ test("publishes exact Base x402 discovery terms", () => {
     "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18",
   );
   assert.equal(x402ServiceManifest.pricing.base, "0.01");
-  assert.match(x402ServiceManifest.endpoint, /^https:\/\/payanagent\.com\/x402\//);
+  assert.equal(
+    x402ServiceManifest.endpoint,
+    "https://api.datapoint.market/r/ten-dollar-wallet-test/api-brief-acceptance-checklist",
+  );
 });
 
 test("compiles an English API brief into stable structured criteria", () => {

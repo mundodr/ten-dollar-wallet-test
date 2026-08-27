@@ -54,7 +54,7 @@ try {
 }
 
 let registered = false;
-if (!credentials?.apiKey || !credentials?.agentId) {
+async function registerAgent() {
   const registration = await request("/api/v1/agents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -85,7 +85,19 @@ if (!credentials?.apiKey || !credentials?.agentId) {
   registered = true;
 }
 
-const profile = await request(`/api/v1/agents/${encodeURIComponent(credentials.agentId)}`);
+if (!credentials?.apiKey || !credentials?.agentId) await registerAgent();
+
+let profile = await request(`/api/v1/agents/${encodeURIComponent(credentials.agentId)}`);
+if (
+  profile.response.status === 404 ||
+  profile.response.status === 410 ||
+  (profile.response.status === 400 && profile.body?.error === "Invalid agent ID")
+) {
+  // The beta service can garbage-collect dormant agents. Re-register only when
+  // the old identity is definitively absent; never replace a live mismatched profile.
+  await registerAgent();
+  profile = await request(`/api/v1/agents/${encodeURIComponent(credentials.agentId)}`);
+}
 if (!profile.response.ok) throw new Error(`PayanAgent profile check failed (${profile.response.status})`);
 const profileWallet =
   profile.body?.walletAddress ?? profile.body?.wallet_address ?? profile.body?.agent?.walletAddress;
@@ -101,9 +113,12 @@ try {
 }
 
 let offer = null;
-if (state?.offerId) {
+if (state?.offerId && state?.agentId === credentials.agentId) {
   const current = await request(`/api/v1/offers/${encodeURIComponent(state.offerId)}`);
-  if (current.response.ok) offer = current.body?.offer ?? current.body;
+  if (current.response.ok) {
+    const candidate = current.body?.offer ?? current.body;
+    if (candidate?.isActive !== false && candidate?.status !== "inactive") offer = candidate;
+  }
 } else {
   const search = await request(
     `/api/v1/offers?q=${encodeURIComponent("Deterministic API Brief Acceptance Checklist")}&sort=new&limit=20`,
@@ -152,9 +167,10 @@ if (!offer) {
   offer = current.body?.offer ?? current.body;
   created = true;
 } else {
-  if (state?.endpoint !== expectedEndpoint) {
+  const currentOfferId = offer._id ?? offer.id ?? offer.offerId;
+  if (state?.endpoint !== expectedEndpoint || state?.offerId !== currentOfferId) {
     const update = await request(
-      `/api/v1/offers/${encodeURIComponent(state.offerId)}`,
+      `/api/v1/offers/${encodeURIComponent(currentOfferId)}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -168,12 +184,12 @@ if (!offer) {
     offer = {
       ...offer,
       ...(update.body?.offer ?? update.body),
-      _id: state.offerId,
+      _id: currentOfferId,
     };
   }
 }
 
-const offerId = state?.offerId ?? offer._id ?? offer.id ?? offer.offerId;
+const offerId = offer._id ?? offer.id ?? offer.offerId;
 if (!offerId) throw new Error("PayanAgent offer ID could not be recovered");
 const publicState = {
   agentId: credentials.agentId,

@@ -11,10 +11,10 @@ export const x402ServiceManifest = {
   payment: {
     address: "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18",
     chain: "base",
-    facilitator: "https://payanagent.com",
+    facilitator: "https://api.datapoint.market",
   },
   endpoint:
-    "https://payanagent.com/x402/kh7ezjzt4etk8x1s908z7wngqn8d89hx",
+    "https://api.datapoint.market/r/ten-dollar-wallet-test/api-brief-acceptance-checklist",
 };
 
 function cleanBrief(value) {
