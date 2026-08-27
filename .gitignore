@@ -49,6 +49,7 @@ yarn-error.log*
 /.agrenting/
 /.agentstore/
 /.clawlancer/
+/.agentbuy/
 /.agentictrade/
 /.payanagent/
 /.x402jobs/
