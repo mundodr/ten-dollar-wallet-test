@@ -1,12 +1,12 @@
 # Frantic bounty 127 delivery report
 
-- Platform and byline: Medium profile `https://medium.com/@ten-dollar-wallet-lab` under `Ten Dollar Wallet Lab`; publication is still pending.
+- Platform and byline: Medium profile `https://medium.com/@ten-dollar-wallet-lab` under `Ten Dollar Wallet Lab`; the final article is still pending.
 - Topic: generating a documentation site from an OpenAPI source with the open-source Sourcey generator.
 - Reproduction: `npx --yes sourcey@3.6.5 validate openapi.yaml` reported one operation and five schemas, then the pinned build completed in 0.9 seconds.
 - Dated sources: the article links the official OpenAPI integration guide, official introduction, and official Sourcey repository, all checked on 2026-08-27 UTC.
 - Generated evidence: the build produced nine files including static HTML, search data, `llms.txt`, and `llms-full.txt`.
 - Word count: 892 words by `wc -w` in the article source before Medium rendering.
-- Prior-post count: zero in the public RSS feed until the three prepared original articles finish publishing.
+- Prior-post count: two publicly retrievable earlier articles. The third is saved as Medium draft `621e00f86602`; Medium's rolling two-story limit permits the next attempt after 2026-08-28 19:02 UTC.
 
 ## Prepared publication text
 

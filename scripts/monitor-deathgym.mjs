@@ -59,13 +59,25 @@ const fps = match ? Number(match[3]) : null;
 const completedSteps = Math.min(targetSteps, currentIteration * 65_536);
 const remainingSeconds = fps ? Math.max(0, targetSteps - completedSteps) / fps : null;
 
-const evaluationFiles = await filesIn(evaluationsDir, ".json");
+const evaluationFiles = (await filesIn(evaluationsDir, ".json")).filter(
+  (file) => !file.name.endsWith(".submission.json"),
+);
 const evaluations = [];
 for (const file of evaluationFiles) {
   try {
     evaluations.push(JSON.parse(await readFile(path.join(evaluationsDir, file.name), "utf8")));
   } catch {
     evaluations.push({ file: file.name, parseError: true });
+  }
+}
+
+const submissionFiles = await filesIn(evaluationsDir, ".submission.json");
+const submissions = [];
+for (const file of submissionFiles) {
+  try {
+    submissions.push(JSON.parse(await readFile(path.join(evaluationsDir, file.name), "utf8")));
+  } catch {
+    submissions.push({ file: file.name, parseError: true });
   }
 }
 
@@ -93,5 +105,6 @@ console.log(JSON.stringify({
   },
   checkpoints: await filesIn(checkpointDir, ".safetensors"),
   evaluations,
+  submissions,
   countingPolicy: "Training and submissions do not count unless the benchmark is awarded, withdrawn, and transferred to the approved Base target.",
 }, null, 2));
