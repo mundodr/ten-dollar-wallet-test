@@ -1,0 +1,25 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { compileAcceptanceCriteria } from "../scripts/agentictrade-service-api.mjs";
+
+test("compiles an English API brief into stable structured criteria", () => {
+  const result = compileAcceptanceCriteria(
+    "POST /v1/orders requires bearer auth, returns 201, and retries must be idempotent.",
+  );
+  assert.match(result.summary, /POST \/v1\/orders/);
+  assert.ok(result.acceptance_criteria.some((item) => /Unauthenticated/.test(item.requirement)));
+  assert.ok(result.acceptance_criteria.some((item) => /idempotent/.test(item.requirement)));
+  assert.equal(result.test_cases.length, 6);
+});
+
+test("returns Chinese checklist text for a Chinese brief", () => {
+  const result = compileAcceptanceCriteria("为分页接口增加游标参数，必须处理并发请求。");
+  assert.match(result.summary, /生成可验证/);
+  assert.ok(result.acceptance_criteria.some((item) => /分页/.test(item.requirement)));
+  assert.ok(result.acceptance_criteria.some((item) => /并发/.test(item.requirement)));
+});
+
+test("rejects an empty brief", () => {
+  assert.throws(() => compileAcceptanceCriteria("   "), /non-empty/);
+});

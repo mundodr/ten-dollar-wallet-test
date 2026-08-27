@@ -28,6 +28,8 @@ Can tiny gifts across four public blockchain routes reach a combined **$10**?
 
 [GitHub work-offer issue (2 USDC) / GitHub 公开工作报价（2 USDC）](https://github.com/mundodr/ten-dollar-wallet-test/issues/2)
 
+[AgenticTrade deterministic API checklist service (0.01 USDC/call) / AgenticTrade 确定性接口验收清单服务（0.01 USDC/次）](https://agentictrade.io/marketplace/1a12ed09-74e6-4613-92c1-2f660bb7e751)
+
 [Verified Nostr 2 USDC work update / 已验证的 Nostr 2 USDC 工作更新](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspz3mhxue69uhhyetvv9ujuerpd46hxtnfduqs6amnwvaz7tmwdaejumr0dsq3vamnwvaz7tmjv4kxz7fwwpexjmtpdshxuet5qqszf4a3msfzh0ragpta0dr9c9tyym2auq26e4kgmlc0rwh334dtnvsssffj5)
 
 [Verified Nostr work-offer post / 已验证的 Nostr 任务帖](https://njump.me/nevent1qgsg9220zgkt5xayx7pjm0rmf4v9lzuzhtazp9yrs5xtwyumdzfwslspp4mhxue69uhkummn9ekx7mqpzemhxue69uhhyetvv9ujuurjd9kkzmpwdejhgqg0waehxw309ahx7um5wghx6mmdqqsv398c65g7jts505gy06lew7crtm5hdjy23j84yctztkj5g9xpkzq2ghmxm)
@@ -87,11 +89,13 @@ TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk
 - A scheduled workflow checks all four networks every 30 minutes and updates the public snapshot when displayed balances change.
 - A registered Superteam Earn agent (`ten-dollar-wallet-agent-harlequin-44`) checks official agent-eligible work; API credentials and claim codes are never published.
 - An AgentPact seller profile publishes small Python automation, code-review, and API-triage offers. The ready 2 USDC CSV service is matched against open buyer needs, backed by a public four-test sample, and mirrored as a searchable GitHub work-offer issue. AgentPact settles in Base USDC; Base is now one of the declared goal networks, so a verified payout to the listed EVM address counts.
+- A live AgenticTrade service turns English or Chinese API briefs into deterministic JSON acceptance criteria and six executable-style test scenarios. Its public implementation is tested in this repository, its platform provider key is bound to the listed Base address, and only chain-settled revenue counts toward the experiment.
 - The public Frantic board is monitored for funded work paying $10 or less to Base USDC. Frantic identity or payout credentials are never invented; a claim is attempted only when its published identity gate can actually be satisfied.
-- A registered Agent Hansa worker is monitored for new agent-safe tasks. Its payout wallet currently cannot be set without a verified email, so cancelled check-in credits and non-withdrawable bonus balances are explicitly excluded.
+- A registered Agent Hansa worker now has a verified project email and the listed Solana payout address bound. It monitors agent-safe tasks and zero-entry survival tournaments; cancelled credits, internal betting balances, and non-withdrawable bonuses remain excluded.
 - A GitHub scanner checks recent USDC and SOL bounty issues while filtering testnets, self-funded tasks, deposits, private-key requests, external social-account work, and bounty aggregators.
 - Bounty attempts must require no deposit, wallet signature, seed phrase, private key, or fabricated identity. Original submissions and payment evidence will be disclosed if work is accepted.
 - Block explorers are always the authoritative record.
+- Registration-mail automation uses the [Mail.tm API](https://mail.tm/) for a dedicated project inbox; credentials remain local and are never committed.
 
 Superteam Earn 代理账号会检查官方允许代理参与的任务；其 API 凭据和领取码不会公开。任何尝试都不得要求押金、钱包签名、助记词、私钥或虚假身份；若成果获奖，将公开原创提交与付款证据。
 
