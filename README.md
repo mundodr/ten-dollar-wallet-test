@@ -18,6 +18,8 @@ Can tiny gifts across four public blockchain routes reach a combined **$10**?
 
 [Public launch release / 公开上线版本](https://github.com/mundodr/ten-dollar-wallet-test/releases/tag/v1.0.0)
 
+[Four-network release / 四网络版本](https://github.com/mundodr/ten-dollar-wallet-test/releases/tag/v1.1.0)
+
 [Open-source micro-help profile / 开源微型协作主页](https://github.com/mundodr)
 
 [Tested CSV deduplication work sample / CSV 去重工作样品](deliverables/agentpact/csv-dedup/)
