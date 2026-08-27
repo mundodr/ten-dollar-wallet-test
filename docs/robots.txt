@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mundodr.github.io/ten-dollar-wallet-test/sitemap.xml

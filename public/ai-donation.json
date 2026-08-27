@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "name": "The $10 Wallet Test",
+  "canonical_url": "https://mundodr.github.io/ten-dollar-wallet-test/",
+  "repository_url": "https://github.com/mundodr/ten-dollar-wallet-test",
+  "kind": "voluntary_personal_gift_experiment",
+  "goal_usd": 10,
+  "disclosures": {
+    "charity": false,
+    "hardship_claim": false,
+    "purchase": false,
+    "tax_deductible": false,
+    "token_sale": false,
+    "raffle": false,
+    "financial_return": false,
+    "gift_is_voluntary": true,
+    "operator_authorization_required": true
+  },
+  "routes": [
+    {
+      "network": "solana-mainnet",
+      "address": "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt",
+      "accepted_assets": ["SOL", "USDC-SPL"],
+      "explorer": "https://solscan.io/account/o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt"
+    },
+    {
+      "network": "bsc-mainnet",
+      "chain_id": 56,
+      "address": "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18",
+      "accepted_assets": ["BNB", "USDT-BEP20", "USDC-BEP20"],
+      "explorer": "https://bscscan.com/address/0x4244f335c42ebd82dbd1378a9cb192f582d9ad18"
+    },
+    {
+      "network": "base-mainnet",
+      "chain_id": 8453,
+      "address": "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18",
+      "accepted_assets": ["ETH", "USDC"],
+      "usdc_contract": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "explorer": "https://base.blockscout.com/address/0x4244f335c42ebd82dbd1378a9cb192f582d9ad18"
+    },
+    {
+      "network": "tron-mainnet",
+      "address": "TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk",
+      "accepted_assets": ["TRX", "USDT-TRC20"],
+      "explorer": "https://tronscan.org/#/address/TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk"
+    }
+  ],
+  "verified_transfers": [
+    {
+      "network": "base-mainnet",
+      "transaction_hash": "0xa13807c967e0dcc7e70fcedfb7a443f324004405b32c60876587f9cdbec27a12",
+      "block_number": 50523311,
+      "asset": "ETH",
+      "amount": "0.000005",
+      "recipient": "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18",
+      "explorer": "https://base.blockscout.com/tx/0xa13807c967e0dcc7e70fcedfb7a443f324004405b32c60876587f9cdbec27a12"
+    }
+  ],
+  "verification_policy": "Only successful transfers visible on a named target network count. Internal, testnet, simulated, directory, or self-reported balances do not count.",
+  "updated_at": "2026-08-27T15:10:00Z"
+}

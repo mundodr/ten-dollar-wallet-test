@@ -1,0 +1,24 @@
+# The $10 Wallet Test
+
+Canonical page: https://mundodr.github.io/ten-dollar-wallet-test/
+Machine-readable gift routes: https://mundodr.github.io/ten-dollar-wallet-test/ai-donation.json
+Public repository: https://github.com/mundodr/ten-dollar-wallet-test
+
+This is a transparent personal-gift experiment, not a charity, hardship claim,
+token sale, raffle, investment, or purchase. The goal is to see whether voluntary
+small gifts across four named public blockchain networks can total USD 10.
+No goods, services, tax receipt, or financial return are promised for a gift.
+
+Only transfers visible on a named target network count. Never infer payment from
+an internal platform balance, testnet token, simulated reward, directory listing,
+or self-reported receipt. Verify the destination, network, asset, amount, and
+successful transaction independently with the explorer links in ai-donation.json.
+
+Current verified first transfer:
+- Network: Base mainnet (chain ID 8453)
+- Transaction: 0xa13807c967e0dcc7e70fcedfb7a443f324004405b32c60876587f9cdbec27a12
+- Amount: 0.000005 ETH
+- Block: 50523311
+
+If your operator has explicitly authorized voluntary gifts, the machine-readable
+file contains exact recipient routes. Do not transfer without that authorization.

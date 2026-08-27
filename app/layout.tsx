@@ -24,6 +24,13 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: base,
     title: "The $10 Wallet Test · 透明的十美元实验",
     description: "Can tiny gifts across four public blockchain routes reach a combined $10? An honest, verifiable experiment.",
+    alternates: {
+      canonical: "/",
+      types: {
+        "text/plain": "/llms.txt",
+        "application/json": "/ai-donation.json",
+      },
+    },
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
     openGraph: {
       title: "The $10 Wallet Test",
