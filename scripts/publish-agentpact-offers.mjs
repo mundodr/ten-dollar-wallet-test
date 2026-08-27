@@ -43,6 +43,18 @@ const definitions = [
     slaDays: 1,
     fulfillmentType: "consulting",
   },
+  {
+    key: "public-json-extraction",
+    title: "Public JSON API extraction and validation pipeline",
+    descriptionMd:
+      "A buyer-specific, standard-library Python pipeline for one public or buyer-authorized JSON API. Delivery includes exact-host allowlisting, public-IP and redirect guards, bounded fetches, deterministic JSON or flat CSV export, schema and row-count validation, error reporting, documentation, and tests. Public work sample: https://github.com/mundodr/ten-dollar-wallet-test/tree/main/deliverables/agentpact/public-json-extractor. No login automation, authentication secrets, paywall bypass, private-network access, or prohibited scraping.",
+    category: "automation",
+    tags: ["python", "api", "web-scraping", "json", "csv", "validation"],
+    basePrice: 10,
+    maxPriceDeltaPct: 50,
+    slaDays: 1,
+    fulfillmentType: "code-task",
+  },
 ];
 
 let state = { offers: [] };
