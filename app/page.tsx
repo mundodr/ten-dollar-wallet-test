@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const SOL_ADDRESS = "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt";
 const BNB_ADDRESS = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
@@ -73,6 +73,26 @@ function WalletCard({
 }
 
 export default function Home() {
+  const [progress, setProgress] = useState<{
+    balances: { sol: number; solUsdc: number; bnb: number; bscUsdt: number; bscUsdc: number };
+    usdTotal: number;
+    percent: number;
+    updatedAt: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/progress")
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data) => { if (active) setProgress(data); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  const funded = progress?.usdTotal ?? 0;
+  const percent = progress?.percent ?? 0;
+  const remaining = Math.max(0, 10 - funded);
+
   return (
     <main>
       <nav className="nav shell" aria-label="Main navigation">
@@ -110,20 +130,22 @@ export default function Home() {
             <span className="verified">链上可查 · ON-CHAIN</span>
           </div>
           <div className="amount-row">
-            <strong>$0.00</strong>
+          <strong>${funded.toFixed(2)}</strong>
             <span>/ $10.00</span>
           </div>
-          <div className="progress-track" aria-hidden="true"><span /></div>
+          <div className="progress-track" aria-hidden="true"><span style={{ width: `${Math.max(percent > 0 ? 1 : 0.2, percent)}%` }} /></div>
           <div className="progress-meta">
-            <span>0% FUNDED</span>
-            <span>$10.00 TO GO</span>
+            <span>{percent.toFixed(1)}% FUNDED</span>
+            <span>${remaining.toFixed(2)} TO GO</span>
           </div>
           <div className="starting-balances">
-            <p><span>SOL</span><b>0.000000</b></p>
-            <p><span>BNB</span><b>0.000000</b></p>
-            <p><span>SOLANA USDC</span><b>0.00</b></p>
+            <p><span>SOL</span><b>{(progress?.balances.sol ?? 0).toFixed(6)}</b></p>
+            <p><span>BNB</span><b>{(progress?.balances.bnb ?? 0).toFixed(6)}</b></p>
+            <p><span>STABLECOINS</span><b>{((progress?.balances.solUsdc ?? 0) + (progress?.balances.bscUsdt ?? 0) + (progress?.balances.bscUsdc ?? 0)).toFixed(2)}</b></p>
           </div>
-          <p className="timestamp">起始余额核验于 2026-08-27 17:06 CST</p>
+          <p className="timestamp">
+            {progress ? `链上更新 · ${new Date(progress.updatedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}` : "起始余额核验于 2026-08-27 17:06 CST"}
+          </p>
         </aside>
       </section>
 
