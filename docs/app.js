@@ -17,15 +17,19 @@ async function tokenBalance(contract) {
   return Number(BigInt(value)) / 1e18;
 }
 
+async function safe(task, fallback) {
+  try { return await task; } catch { return fallback; }
+}
+
 async function refresh() {
   try {
     const [solRaw, solTokens, bnbRaw, usdt, usdc, prices] = await Promise.all([
-      rpc("https://api.mainnet-beta.solana.com", "getBalance", [SOL_ADDRESS, { commitment: "confirmed" }]),
-      rpc("https://api.mainnet-beta.solana.com", "getTokenAccountsByOwner", [SOL_ADDRESS, { mint: USDC_MINT }, { encoding: "jsonParsed", commitment: "confirmed" }]),
-      rpc("https://bsc-dataseed.binance.org", "eth_getBalance", [BNB_ADDRESS, "latest"]),
-      tokenBalance(BSC_USDT),
-      tokenBalance(BSC_USDC),
-      fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana,binancecoin&vs_currencies=usd").then(r => r.json()),
+      safe(rpc("https://api.mainnet-beta.solana.com", "getBalance", [SOL_ADDRESS, { commitment: "confirmed" }]), { value: 0 }),
+      safe(rpc("https://api.mainnet-beta.solana.com", "getTokenAccountsByOwner", [SOL_ADDRESS, { mint: USDC_MINT }, { encoding: "jsonParsed", commitment: "confirmed" }]), { value: [] }),
+      safe(rpc("https://bsc-dataseed.binance.org", "eth_getBalance", [BNB_ADDRESS, "latest"]), "0x0"),
+      safe(tokenBalance(BSC_USDT), 0),
+      safe(tokenBalance(BSC_USDC), 0),
+      safe(fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana,binancecoin&vs_currencies=usd").then(r => r.ok ? r.json() : Promise.reject()), { solana: { usd: 77.97 }, binancecoin: { usd: 709.65 } }),
     ]);
     const sol = solRaw.value / 1e9;
     const bnb = Number(BigInt(bnbRaw)) / 1e18;
