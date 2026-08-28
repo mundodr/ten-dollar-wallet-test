@@ -6,7 +6,7 @@
 - Local GPU: NVIDIA GeForce RTX 5060 Laptop GPU, PyTorch 2.12.1 + CUDA 13.0.
 - 20M-step baseline: 179.5 XP on the official public bank (seeds 3930, 7717, 20477), archive validated.
 - Current observed public leader: 347.4 XP.
-- Active long run: 5B steps, checkpoint every 250M steps, systemd user unit `deathgym-taskmarket-5b.service`.
+- Active long run: 5B steps, checkpoint every 250M steps, systemd user unit `deathgym-taskmarket-5b.service`; `deathgym-taskmarket-5b.timer` restores the newest stable checkpoint after interruption or reboot.
 - Automatic continuation: after the 5B final checkpoint exists, `deathgym-taskmarket-9b.timer` starts `scripts/run-deathgym-continuation.mjs`, which resumes toward 9B steps and, after an interruption, selects its newest saved 9B checkpoint. Nine billion is the largest target projected to finish safely before expiry at the observed throughput.
 - First long-run checkpoint: `step249M.safetensors`, 238.1 XP on the same public bank, validator passed.
 - First Taskmarket submission: `e192ee7e-d9b2-42cd-9b37-15ea2b1a895c`, transaction `0x0247530a08c1dccafa7f5004b7f7f1807379942f5c889930a115e4f5dbe699be` at `2026-08-27T19:06:07.967Z`.
