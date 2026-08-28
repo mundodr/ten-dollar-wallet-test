@@ -6,6 +6,10 @@ const credentials = JSON.parse(
   await readFile(path.resolve(".agenthansa/credentials.json"), "utf8"),
 );
 const statePath = path.resolve(".agenthansa/arena-state.json");
+const supportedStrategies = new Map([
+  ["coin_snipe", "random_pick"],
+  ["crash_pilot", "safe_exit"],
+]);
 
 async function request(route, options = {}) {
   let response;
@@ -40,19 +44,22 @@ async function request(route, options = {}) {
 const { body: upcomingList } = await request("/api/arena/tournaments?status=upcoming");
 const upcoming = (upcomingList?.items ?? [])
   .filter((tournament) => tournament.status === "upcoming")
-  .filter((tournament) => tournament.game?.key === "crash_pilot")
+  .filter((tournament) => supportedStrategies.has(tournament.game?.key))
+  .filter((tournament) => Number(tournament.pot_amount ?? 0) === 0)
   .sort((left, right) => new Date(left.scheduled_at) - new Date(right.scheduled_at))[0];
 if (!upcoming) {
-  console.log(JSON.stringify({ status: "no_upcoming_free_crash_pilot" }, null, 2));
+  console.log(JSON.stringify({ status: "no_supported_free_tournament" }, null, 2));
   process.exit(0);
 }
 if (Number(upcoming.pot_amount ?? 0) !== 0) {
   throw new Error("Refusing an arena tournament with a non-zero participant pot");
 }
 
+const gameKey = upcoming.game.key;
+const selectedStrategy = supportedStrategies.get(gameKey);
 const { body: strategy } = await request("/api/arena/strategy", {
   method: "PUT",
-  body: JSON.stringify({ game_key: "crash_pilot", strategy: "safe_exit", params: {} }),
+  body: JSON.stringify({ game_key: gameKey, strategy: selectedStrategy, params: {} }),
 });
 const joined = await request(`/api/arena/tournaments/${upcoming.id}/participants`, {
   method: "POST",
@@ -67,9 +74,9 @@ const ownParticipant = (participants?.items ?? participants ?? []).find(
 
 const state = {
   tournamentId: upcoming.id,
-  game: upcoming.game?.key,
+  game: gameKey,
   scheduledAt: upcoming.scheduled_at,
-  strategy: strategy?.strategy ?? "safe_exit",
+  strategy: strategy?.strategy ?? selectedStrategy,
   joinedStatus: joined.status,
   participantConfirmed: Boolean(ownParticipant) || joined.status === 201 || joined.status === 409,
   updatedAt: new Date().toISOString(),

@@ -6,6 +6,11 @@ const since = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
 const queries = [
   `is:issue is:open USDC bounty in:title,body updated:>=${since}`,
   `is:issue is:open SOL bounty in:title,body updated:>=${since}`,
+  `is:issue is:open USDT bounty in:title,body updated:>=${since}`,
+  `is:issue is:open "Base USDC" reward in:title,body updated:>=${since}`,
+  `is:issue is:open "paid in USDC" in:title,body updated:>=${since}`,
+  `is:issue is:open "paid in SOL" in:title,body updated:>=${since}`,
+  `is:issue is:open "BNB" reward in:title,body updated:>=${since}`,
   `is:issue is:open crypto reward in:title,body updated:>=${since}`,
 ];
 
@@ -51,10 +56,10 @@ const excludedRepos = new Set([
 ]);
 const excludedPattern =
   /test bounty|testnet|sepolia|funding[- ]pending|send (?:usdc|sol)|\bpayto\b|stake|deposit|private key|seed phrase|full platform initialization|paste the entire block|watch our repos?|open an issue or comment|referral|self[- ]fund|entry fee|youtube|screen recording|film a real demo|bounty alert|owockibot|grantfox|maybe rewarded|twitter\/x thread|write (?:a )?twitter|\bgpt[- ]?\d+(?:\.\d+)?[- ]sol\b/i;
-const paymentPattern = /\b(?:usdc|sol|bnb|base|crypto)\b/i;
+const paymentPattern = /\b(?:usdc|usdt|sol|bnb|eth|base|crypto)\b/i;
 const workPattern = /\b(?:bounty|reward|payout|paid)\b/i;
 const explicitAmountPattern =
-  /(?:\$\s*\d+(?:\.\d+)?\s*(?:usdc|sol)|\b\d+(?:\.\d+)?\s*(?:usdc|sol)\b)/i;
+  /(?:\$\s*\d+(?:\.\d+)?\s*(?:usdc|usdt|sol|bnb|eth)|\b\d+(?:\.\d+)?\s*(?:usdc|usdt|sol|bnb|eth)\b)/i;
 
 const seen = new Set();
 const opportunities = [];
