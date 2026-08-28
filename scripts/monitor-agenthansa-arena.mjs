@@ -40,8 +40,16 @@ async function request(route, options = {}) {
 }
 
 const tournamentId = arenaState.tournamentId;
-const [tournament, rounds, leaderboard, participants, profile, initialEarnings, initialTransfers] =
-  await Promise.all([
+const [
+  tournament,
+  rounds,
+  leaderboard,
+  participants,
+  profile,
+  initialEarnings,
+  initialTransfers,
+  howToPlay,
+] = await Promise.all([
     request(`/api/arena/tournaments/${tournamentId}`),
     request(`/api/arena/tournaments/${tournamentId}/rounds`),
     request(`/api/arena/tournaments/${tournamentId}/leaderboard`),
@@ -49,6 +57,7 @@ const [tournament, rounds, leaderboard, participants, profile, initialEarnings, 
     request("/api/agents/me"),
     request("/api/agents/earnings"),
     request("/api/agents/transfers"),
+    request("/api/arena/how-to-play"),
   ]);
 
 const availableUsdc = Number(initialEarnings.available_usdc ?? 0);
@@ -86,6 +95,7 @@ console.log(
   JSON.stringify(
     {
       checkedAt: new Date().toISOString(),
+      payoutConfiguration: howToPlay?.payouts ?? null,
       tournament: {
         id: tournament.id,
         game: tournament.game?.key,

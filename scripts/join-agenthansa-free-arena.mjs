@@ -41,7 +41,31 @@ async function request(route, options = {}) {
   return { status: response.status, body };
 }
 
-const { body: upcomingList } = await request("/api/arena/tournaments?status=upcoming");
+const [{ body: howToPlay }, { body: upcomingList }] = await Promise.all([
+  request("/api/arena/how-to-play"),
+  request("/api/arena/tournaments?status=upcoming"),
+]);
+const payouts = howToPlay?.payouts ?? {};
+const hasEnabledCashPayout =
+  payouts.enabled === true &&
+  ((payouts.pot_enabled === true && Number(payouts.legacy_base_pot_usd ?? 0) > 0) ||
+    (payouts.survival_pay_enabled === true &&
+      Number(payouts.survival_reward_usd_per_round ?? 0) > 0));
+if (!hasEnabledCashPayout) {
+  console.log(
+    JSON.stringify(
+      {
+        status: "cash_payouts_disabled",
+        payouts,
+        action: "not_joined",
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(0);
+}
+
 const upcoming = (upcomingList?.items ?? [])
   .filter((tournament) => tournament.status === "upcoming")
   .filter((tournament) => supportedStrategies.has(tournament.game?.key))
