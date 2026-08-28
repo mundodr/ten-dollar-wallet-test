@@ -15,6 +15,7 @@ const workerAddress = "0xbb8f5dA5e6E14BD221e720D8e1798Fb8A5c7EA71";
 const taskExpiry = new Date("2026-08-29T21:40:19.006Z").getTime();
 const normalImprovementXp = 3;
 const finalWindowMs = 2 * 60 * 60 * 1_000;
+const submissionFeeBaseUnits = 1_000n;
 
 function run(args, timeout = 90_000) {
   const stdout = execFileSync(taskmarket, args, {
@@ -139,6 +140,50 @@ if (!candidate) {
         minimumNextXp: inFinalWindow ? `>${bestSubmittedXp}` : bestSubmittedXp + normalImprovementXp,
         inFinalWindow,
         expired: timeUntilExpiryMs <= 0,
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(0);
+}
+
+// Submitting creates a participant contract and currently costs 0.001 USDC.
+// Do not let the five-minute timer repeatedly upload an artifact when the
+// operator has not accepted the current legal bundle or the wallet cannot pay
+// the disclosed fee.
+const legal = run(["legal", "status"]);
+if (legal.accepted !== true) {
+  console.log(
+    JSON.stringify(
+      {
+        status: "legal-acceptance-required",
+        checkpoint: candidate.checkpoint,
+        publicBankMeanXp: Number(candidate.publicBankMeanXp),
+        bundleVersion: legal.bundleVersion ?? null,
+        bundleStatus: legal.status ?? null,
+        documents: legal.documents ?? [],
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(0);
+}
+
+const wallet = run(["wallet", "balance"]);
+const balanceBaseUnits = BigInt(wallet.balanceBaseUnits ?? "0");
+if (balanceBaseUnits < submissionFeeBaseUnits) {
+  console.log(
+    JSON.stringify(
+      {
+        status: "insufficient-submission-balance",
+        checkpoint: candidate.checkpoint,
+        publicBankMeanXp: Number(candidate.publicBankMeanXp),
+        balanceBaseUnits: balanceBaseUnits.toString(),
+        requiredBaseUnits: submissionFeeBaseUnits.toString(),
+        asset: "USDC",
+        network: "eip155:8453",
       },
       null,
       2,
