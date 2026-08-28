@@ -62,6 +62,7 @@ yarn-error.log*
 /.x402jobs/
 /.x402bazaar/
 /.tools402/
+/.agentxchange/
 /.nohumans/
 /.agentpaystore/
 /.archtools/
