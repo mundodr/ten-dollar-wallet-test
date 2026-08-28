@@ -7,7 +7,7 @@ const targetWallet = "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt";
 const accountPath = path.resolve(".taskbounty/account.json");
 const webhookPath = path.resolve(".taskbounty/webhook.json");
 const publicUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/taskbounty/webhook";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/taskbounty/webhook";
 
 const account = JSON.parse(await readFile(accountPath, "utf8"));
 if (

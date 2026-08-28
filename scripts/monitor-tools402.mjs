@@ -3,7 +3,7 @@ import path from "node:path";
 
 const apiBase = "https://api.tools402.dev";
 const upstreamUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/";
 const targetPath = "/v1/ten-dollar-wallet-lab/api-brief-checklist";
 const targetBaseWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const credentialsPath = path.resolve(".tools402/credentials.json");

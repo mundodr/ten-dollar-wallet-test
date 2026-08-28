@@ -6,7 +6,7 @@ import { keccak_256 } from "@noble/hashes/sha3.js";
 
 const apiBase = "https://x402-api.onrender.com";
 const serviceUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/x402";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/x402";
 const targetBaseWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const price = 0.01;
 const stateDirectory = path.resolve(".x402bazaar");

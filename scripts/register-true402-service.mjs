@@ -4,7 +4,7 @@ import { x402ServiceManifest } from "./agentictrade-service-api.mjs";
 
 const registryUrl = "https://true402.dev/api/v1/services";
 const manifestBaseUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com";
+  "https://begins-greatly-badge-dealers.trycloudflare.com";
 const privateDir = path.resolve(".true402");
 const statePath = path.join(privateDir, "listing.json");
 

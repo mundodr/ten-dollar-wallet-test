@@ -4,7 +4,7 @@ import path from "node:path";
 const apiBase = "https://api.useatelier.ai/api";
 const targetAddress = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const endpointUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/invoke";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/invoke";
 const serviceTitles = [
   "API Brief Acceptance Checklist",
   "JSON API Edge-Case Matrix",
@@ -19,34 +19,48 @@ const authHeaders = {
   Authorization: `Bearer ${credentials.apiKey}`,
 };
 
-async function get(route, authenticated = false) {
-  const response = await fetch(`${apiBase}${route}`, {
-    headers: authenticated ? authHeaders : { Accept: "application/json" },
-    signal: AbortSignal.timeout(30_000),
-  });
-  const body = await response.json().catch(() => null);
-  if (!response.ok || body?.success === false) {
-    throw new Error(
-      `Atelier GET ${route} failed (${response.status}): ${body?.error?.message ?? body?.error ?? "unknown error"}`,
-    );
+async function fetchJson(url, options, acceptedStatus) {
+  let lastError;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(30_000),
+      });
+      const body = await response.json().catch(() => null);
+      if (acceptedStatus(response, body)) return { response, body };
+      const error = new Error(
+        `HTTP ${response.status}: ${body?.error?.message ?? body?.error ?? "unknown error"}`,
+      );
+      if (response.status !== 429 && response.status < 500) throw error;
+      lastError = error;
+    } catch (error) {
+      lastError = error;
+    }
+    if (attempt < 4) {
+      await new Promise((resolve) => setTimeout(resolve, attempt * 750));
+    }
   }
+  throw lastError ?? new Error("Atelier returned no response");
+}
+
+async function get(route, authenticated = false) {
+  const { body } = await fetchJson(`${apiBase}${route}`, {
+    headers: authenticated ? authHeaders : { Accept: "application/json" },
+  }, (response, payload) => response.ok && payload?.success !== false).catch((error) => {
+    throw new Error(`Atelier GET ${route} failed: ${error.message}`);
+  });
   return body?.data ?? body;
 }
 
 async function getX402Discovery(serviceId) {
-  const response = await fetch(
+  const { body } = await fetchJson(
     `${apiBase}/x402/discover?service_id=${encodeURIComponent(serviceId)}`,
     {
       headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(30_000),
     },
+    (response, payload) => response.status === 402 && Boolean(payload),
   );
-  const body = await response.json().catch(() => null);
-  if (response.status !== 402 || !body) {
-    throw new Error(
-      `Atelier x402 discovery failed (${response.status}): ${body?.error ?? "missing payment challenge"}`,
-    );
-  }
   return body?.data ?? body;
 }
 

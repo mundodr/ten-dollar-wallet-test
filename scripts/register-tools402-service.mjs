@@ -8,7 +8,7 @@ const slug = "ten-dollar-wallet-lab";
 const pathSuffix = "api-brief-checklist";
 const targetPath = `/v1/${slug}/${pathSuffix}`;
 const upstreamUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/";
 const targetBaseWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const stateDirectory = path.resolve(".tools402");
 const credentialsPath = path.join(stateDirectory, "credentials.json");

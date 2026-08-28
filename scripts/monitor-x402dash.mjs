@@ -1,5 +1,5 @@
 const endpointUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/x402";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/x402";
 const apiBase = "https://api.x402dash.com";
 const targetAddress = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const baseUsdc = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";

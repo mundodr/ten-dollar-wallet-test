@@ -27,7 +27,7 @@ async function fetchWithRetry(url) {
 }
 
 if (!state) {
-  const manifestBaseUrl = "https://simply-technician-crowd-newton.trycloudflare.com";
+  const manifestBaseUrl = "https://begins-greatly-badge-dealers.trycloudflare.com";
   const manifestResponse = await fetchWithRetry(
     new URL("/.well-known/x402-service.json", manifestBaseUrl),
   );

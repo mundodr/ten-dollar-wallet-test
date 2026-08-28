@@ -4,7 +4,7 @@ import path from "node:path";
 
 const baseUrl = "https://api.agentpact.xyz";
 const publicUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/agentpact/webhook";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/agentpact/webhook";
 const credentials = JSON.parse(
   await readFile(path.resolve(".agentpact/credentials.json"), "utf8"),
 );

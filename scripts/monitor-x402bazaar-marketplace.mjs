@@ -3,7 +3,7 @@ import path from "node:path";
 
 const apiBase = "https://x402-api.onrender.com";
 const serviceUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/x402";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/x402";
 const targetBaseWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const registrationPath = path.resolve(".x402bazaar/registration.json");
 

@@ -71,6 +71,18 @@ const endpoints = Array.isArray(endpointList)
   : (endpointList?.endpoints ?? endpointList?.data ?? []);
 let endpoint = endpoints.find((candidate) => candidate?.slug === serviceSlug);
 
+if (endpoint?.id && endpoint.origin_url !== originUrl) {
+  const update = await requestJson(
+    `/dashboard/endpoints/${endpoint.id}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ origin_url: originUrl }),
+    },
+  );
+  endpoint = update.body?.endpoint ?? update.body;
+}
+
 if (!endpoint) {
   const payload = {
     name: "API Brief Acceptance Checklist",

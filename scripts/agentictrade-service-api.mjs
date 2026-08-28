@@ -9,7 +9,7 @@ const maxBodyBytes = 64 * 1024;
 const defaultPayanX402Url =
   "https://payanagent.com/x402/kh7ezjzt4etk8x1s908z7wngqn8d89hx";
 const defaultPublicX402Url =
-  "https://simply-technician-crowd-newton.trycloudflare.com/x402";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/x402";
 const solanaTargetWallet =
   "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt";
 const solanaUsdcMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -20,7 +20,7 @@ export const x402ApisProvider = {
   providerId: solanaTargetWallet,
   wallet: solanaTargetWallet,
   publicUrl:
-    "https://simply-technician-crowd-newton.trycloudflare.com/x402apis",
+    "https://begins-greatly-badge-dealers.trycloudflare.com/x402apis",
   chains: ["solana"],
   prices: {
     "codex.regex_check": 0.0015,

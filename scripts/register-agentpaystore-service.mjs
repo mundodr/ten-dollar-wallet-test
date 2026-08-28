@@ -3,7 +3,7 @@ import path from "node:path";
 
 const baseUrl = "https://agentpaystore.com";
 const endpointUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/invoke";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/invoke";
 const paymentAddress = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const serviceName = "API Brief Acceptance Checklist";
 const privateDir = path.resolve(".agentpaystore");

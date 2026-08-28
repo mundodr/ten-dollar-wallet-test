@@ -7,7 +7,7 @@ const privateDir = path.resolve(".atelier");
 const credentialsPath = path.join(privateDir, "credentials.json");
 const solanaKeypairPath = path.join(privateDir, "owner-solana-keypair.json");
 const endpointUrl =
-  "https://simply-technician-crowd-newton.trycloudflare.com/invoke";
+  "https://begins-greatly-badge-dealers.trycloudflare.com/invoke";
 const serviceDefinitions = [
   {
     title: "API Brief Acceptance Checklist",
