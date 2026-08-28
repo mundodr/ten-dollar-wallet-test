@@ -4,7 +4,7 @@ import path from "node:path";
 const apiBase = "https://api.agentstore.tools/api";
 const credentialsPath = path.resolve(".agentstore/credentials.json");
 const listingPath = path.resolve(".agentstore/listing.json");
-const targetBaseWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
+const targetEvmAddress = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 
 async function requestJson(pathname, options = {}, allowedStatuses = []) {
   const response = await fetch(`${apiBase}${pathname}`, {
@@ -40,7 +40,7 @@ const [profileResponse, publicResponse, accessResponse, earnResponse, programRes
     requestJson(`/agents/${encodeURIComponent(agentId)}`),
     requestJson(
       `/agents/${encodeURIComponent(agentId)}/access`,
-      { headers: { "X-Wallet-Address": targetBaseWallet } },
+      { headers: { "X-Wallet-Address": targetEvmAddress } },
       [402],
     ),
     requestJson("/publishers/me/earn-program", { headers: auth }),
@@ -49,9 +49,15 @@ const [profileResponse, publicResponse, accessResponse, earnResponse, programRes
 
 const profile = profileResponse.body?.publisher ?? profileResponse.body;
 const agent = publicResponse.body?.agent ?? publicResponse.body;
-const exactBasePayout = profile?.payout_address?.toLowerCase() === targetBaseWallet;
-const challengeNamesTarget = containsString(accessResponse.body, targetBaseWallet);
-if (!exactBasePayout || accessResponse.status !== 402 || !challengeNamesTarget) {
+const exactEvmPayoutAddress =
+  profile?.payout_address?.toLowerCase() === targetEvmAddress;
+const challengeNamesTarget = containsString(accessResponse.body, targetEvmAddress);
+const payment = accessResponse.body?.payment ?? null;
+const paymentChainId = Number(payment?.x402?.chain_id);
+const exactBasePayout = exactEvmPayoutAddress && paymentChainId === 8453;
+const exactBscPayout = exactEvmPayoutAddress && paymentChainId === 56;
+const goalChainSupported = exactBasePayout || exactBscPayout;
+if (!exactEvmPayoutAddress || accessResponse.status !== 402 || !challengeNamesTarget) {
   throw new Error("AgentStore payout profile or payment challenge drifted");
 }
 if (agent?.pricing?.model !== "one_time" || Number(agent?.pricing?.amount) !== 0.1) {
@@ -63,13 +69,21 @@ console.log(
     {
       checkedAt: new Date().toISOString(),
       publisherId: credentials.publisherId,
+      exactEvmPayoutAddress,
       exactBasePayout,
+      exactBscPayout,
+      goalChainSupported,
       agentId,
       name: agent.name,
       type: agent.type,
       pricing: agent.pricing,
       accessStatus: accessResponse.status,
       challengeNamesTarget,
+      paymentChainId: Number.isFinite(paymentChainId) ? paymentChainId : null,
+      paymentToken: payment?.x402?.token ?? null,
+      paymentAmountUsdc: payment?.amount ?? null,
+      publisherAmountUsdc: payment?.fee_split?.publisher_amount ?? null,
+      platformAmountUsdc: payment?.fee_split?.platform_amount ?? null,
       totalAgents: profile.total_agents ?? null,
       totalSales: profile.total_sales ?? 0,
       totalEarnings: profile.total_earnings ?? 0,
@@ -77,7 +91,9 @@ console.log(
       publisherEarnProgram: earnResponse.body?.current_month ?? null,
       platformEarnProgram: programResponse.body?.current_month ?? null,
       note:
-        "AgentStore sale counters are secondary evidence; only a matching target Base transfer counts toward the goal.",
+        goalChainSupported
+          ? "AgentStore sale counters are secondary evidence; only a matching target-chain receipt counts toward the goal."
+          : "The live x402 challenge settles on an unsupported chain for this goal. Do not publish more products or count AgentStore sales unless it adds Base or BSC settlement.",
     },
     null,
     2,
