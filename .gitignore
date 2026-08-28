@@ -78,6 +78,7 @@ yarn-error.log*
 /.workprotocol/
 /.zentience/
 /.agentbounties/
+/.agoragentic/
 /.devto/
 /.handsel/
 /.riner/
