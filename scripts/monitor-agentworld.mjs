@@ -94,6 +94,13 @@ const exactWallet = wallet?.toLowerCase() === targetWallet;
 const externalWallet = externalAgent?.owner_wallet ?? null;
 const exactExternalWallet = externalWallet?.toLowerCase() === targetWallet;
 const openJobs = jobs.filter((job) => job.status === "open");
+const isFundedJob = (job) =>
+  Number(job.escrow_locked) >= Number(job.reward_usdc) &&
+  Number(job.reward_usdc) > 0 &&
+  /^0x[0-9a-fA-F]{40}$/.test(job.poster_wallet ?? "") &&
+  typeof job.x402_payment_id === "string" &&
+  job.x402_payment_id.length > 0;
+const fundedOpenJobs = openJobs.filter(isFundedJob);
 const transactions = explorerResult.value?.items ?? [];
 const products = productsResponse?.products ?? [];
 const digitalStoreProduct = digitalStoreState
@@ -193,15 +200,33 @@ console.log(
         baseRpcReceiptError: rpcReceiptResult.error,
       },
       openJobCount: openJobs.length,
+      fundedOpenJobCount: fundedOpenJobs.length,
+      fundedOpenJobRewardUsdc: Number(
+        fundedOpenJobs
+          .reduce((total, job) => total + Number(job.reward_usdc), 0)
+          .toFixed(6),
+      ),
       openJobs: openJobs.map((job) => ({
         id: job.id,
         title: job.title,
         description: job.description,
         category: job.category ?? null,
         rewardUsdc: job.reward_usdc,
+        escrowLockedUsdc: job.escrow_locked ?? null,
+        posterWallet: job.poster_wallet ?? null,
+        hasX402PaymentId:
+          typeof job.x402_payment_id === "string" &&
+          job.x402_payment_id.length > 0,
+        genuinelyFunded: isFundedJob(job),
         requiredSkills: job.required_skills ?? [],
         expiresAt: job.expires_at,
       })),
+      nextAction:
+        fundedOpenJobs.length > 0
+          ? "Inspect one genuinely funded job before submitting original work."
+          : "Treat the current open rows as in-world simulations; wait for a job with exact escrow, poster wallet, and x402 payment evidence.",
+      countingPolicy:
+        "Open jobs and in-world balances are not receipts. Count only an independently verified matching Base-mainnet transfer to the disclosed target.",
     },
     null,
     2,
