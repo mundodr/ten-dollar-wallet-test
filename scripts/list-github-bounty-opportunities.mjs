@@ -43,19 +43,27 @@ function search(query) {
 const excludedRepos = new Set([
   "ASHWIN776/payobvio-test",
   "ClankerNation/OpenAgents",
+  "Dragoon4002/artic-trader",
+  "Nexussyn/ai-growth-platform",
+  "Vikingr2023/awesome-agent-bounties",
   "NSPG13/agent-bounties",
+  "bughunter-dotcom/agent-services",
   "dev-kp-eloper/BountyScout",
+  "illbnm/homelab-stack",
   "freedom-winds/BountyScout",
   "gigs-sh/gigs-sh",
   "priyanshudotsol/bounty-demo",
+  "rawgroundbeef/x402.jobs",
   "relayhop/ClaudeEarnSelf-runtime",
   "tinyhumansai/tiny.place",
+  "teamleaderleo/bot-observatory",
+  "tomiin/x402-directory",
   "vansh-09/BountyScout",
   "zhangjiayang6835-cyber/bounty-plaza",
   "kwizzlesurp10-ctrl/x402-mcp",
 ]);
 const excludedPattern =
-  /test bounty|testnet|sepolia|funding[- ]pending|send (?:usdc|sol)|\bpayto\b|stake|deposit|private key|seed phrase|full platform initialization|paste the entire block|watch our repos?|open an issue or comment|referral|self[- ]fund|entry fee|youtube|screen recording|film a real demo|bounty alert|owockibot|grantfox|maybe rewarded|twitter\/x thread|write (?:a )?twitter|\bgpt[- ]?\d+(?:\.\d+)?[- ]sol\b/i;
+  /test bounty|testnet|sepolia|funding[- ]pending|paid offer (?:is )?withdrawn|cannot currently fund|proposal: pilot a taskmarket task|send (?:usdc|sol)|\bpayto\b|stake|deposit|private key|seed phrase|full platform initialization|paste the entire block|watch our repos?|open an issue or comment|referral|self[- ]fund|entry fee|youtube|screen recording|film a real demo|bounty alert|owockibot|grantfox|maybe rewarded|twitter\/x thread|write (?:a )?twitter|\bgpt[- ]?\d+(?:\.\d+)?[- ]sol\b/i;
 const paymentPattern = /\b(?:usdc|usdt|sol|bnb|eth|base|crypto)\b/i;
 const workPattern = /\b(?:bounty|reward|payout|paid)\b/i;
 const explicitAmountPattern =
