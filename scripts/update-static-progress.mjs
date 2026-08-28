@@ -10,24 +10,32 @@ const BSC_USDC = "0x8AC76a51cc950d9822D68b83Fe1Ad97B32Cd580d";
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const TRON_USDT = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
 const PAGE = new URL("../docs/index.html", import.meta.url);
+const BSC_RPC_URLS = [
+  "https://bsc-dataseed.binance.org",
+  "https://bsc-rpc.publicnode.com",
+  "https://1rpc.io/bnb",
+];
 
-async function rpc(url, method, params) {
+async function rpc(urlOrUrls, method, params) {
+  const urls = Array.isArray(urlOrUrls) ? urlOrUrls : [urlOrUrls];
   let lastError;
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-        signal: AbortSignal.timeout(12_000),
-      });
-      if (!response.ok) throw new Error(`${method} returned HTTP ${response.status}`);
-      const body = await response.json();
-      if (body.error || body.result === undefined) throw new Error(`${method} RPC error`);
-      return body.result;
-    } catch (error) {
-      lastError = error;
-      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, attempt * 1_000));
+  for (const url of urls) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+          signal: AbortSignal.timeout(12_000),
+        });
+        if (!response.ok) throw new Error(`${method} returned HTTP ${response.status}`);
+        const body = await response.json();
+        if (body.error || body.result === undefined) throw new Error(`${method} RPC error`);
+        return body.result;
+      } catch (error) {
+        lastError = error;
+        if (attempt < 3) await new Promise(resolve => setTimeout(resolve, attempt * 1_000));
+      }
     }
   }
   throw lastError;
@@ -111,9 +119,9 @@ function currentText(html, id) {
 const [solRaw, solTokens, bnbRaw, bscUsdt, bscUsdc, baseEthRaw, baseUsdc, tron, prices] = await Promise.all([
   rpc("https://api.mainnet-beta.solana.com", "getBalance", [SOL_ADDRESS, { commitment: "confirmed" }]),
   rpc("https://api.mainnet-beta.solana.com", "getTokenAccountsByOwner", [SOL_ADDRESS, { mint: SOLANA_USDC_MINT }, { encoding: "jsonParsed", commitment: "confirmed" }]),
-  rpc("https://bsc-dataseed.binance.org", "eth_getBalance", [BNB_ADDRESS, "latest"]),
-  evmTokenBalance("https://bsc-dataseed.binance.org", BNB_ADDRESS, BSC_USDT, 18),
-  evmTokenBalance("https://bsc-dataseed.binance.org", BNB_ADDRESS, BSC_USDC, 18),
+  rpc(BSC_RPC_URLS, "eth_getBalance", [BNB_ADDRESS, "latest"]),
+  evmTokenBalance(BSC_RPC_URLS, BNB_ADDRESS, BSC_USDT, 18),
+  evmTokenBalance(BSC_RPC_URLS, BNB_ADDRESS, BSC_USDC, 18),
   rpc("https://mainnet.base.org", "eth_getBalance", [BASE_ADDRESS, "latest"]),
   evmTokenBalance("https://mainnet.base.org", BASE_ADDRESS, BASE_USDC, 6),
   tronBalances(),

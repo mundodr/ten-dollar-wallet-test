@@ -48,7 +48,7 @@ async function register() {
   const payload = await request("/api/agent/register", {
     method: "POST",
     body: {
-      name: `TenDollarWalletAgent-${Date.now().toString(36)}`,
+      name: `TenDollarQA-${Date.now().toString(36).slice(-6)}`,
       capabilities: [
         "coding",
         "research",
