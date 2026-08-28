@@ -63,6 +63,7 @@ const [
   externalProfile,
   jobsResponse,
   productsResponse,
+  miningStats,
   explorerResult,
   rpcTransactionResult,
   rpcReceiptResult,
@@ -71,6 +72,7 @@ const [
   fetchJson(`/registry/${encodeURIComponent(credentials.externalAgentId)}`),
   fetchJson("/jobs"),
   fetchJson("/digital-store/products"),
+  fetchJson("/mining/stats"),
   fetchJson(
     `https://base.blockscout.com/api/v2/addresses/${targetWallet}/transactions`,
   ).then(
@@ -166,6 +168,20 @@ console.log(
             fileUrl: digitalStoreProduct?.file_url ?? null,
           }
         : null,
+      miningMicroRewards: {
+        phase: miningStats?.phase ?? null,
+        advertisedChancePerTick: miningStats?.usdc_chance_per_tick ?? null,
+        advertisedPerAgentDailyCapUsdc:
+          miningStats?.usdc_per_agent_daily_cap ?? null,
+        feePoolRemainingUsdc: Number(miningStats?.fee_pool_remaining ?? 0),
+        paidTodayUsdc: Number(miningStats?.usdc_mined_today ?? 0),
+        paidAllTimeUsdc: Number(miningStats?.usdc_mined_alltime ?? 0),
+        recipientCountToday: Number(miningStats?.usdc_recipients_today ?? 0),
+        currentlyFunded:
+          Number(miningStats?.fee_pool_remaining ?? 0) > 0,
+        countingPolicy:
+          "Advertised odds and AGWC mining are not USDC receipts. Require a positive fee pool plus an independently verified Base payout to the target.",
+      },
       verifiedRegistrationTransfer: registrationTransfer
         ? {
             hash: registrationTransfer.hash,
