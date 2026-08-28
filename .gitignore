@@ -67,6 +67,7 @@ yarn-error.log*
 /.datronis/
 /.nohumans/
 /.agentpaystore/
+/.agentpay/
 /.archtools/
 /.datapointmarket/
 /.agentworld/
