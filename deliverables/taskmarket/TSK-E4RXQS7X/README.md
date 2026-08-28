@@ -16,8 +16,10 @@
 - Third Taskmarket submission: `e924b0e2-b5df-4276-a354-43708faec83f`, transaction `0xd30b7d47e99495147f11345d08f07318a51c6c466c7362e37f0780b23a5efdb2` at `2026-08-27T21:37:00.172Z`.
 - Fourth long-run checkpoint: `step999M.safetensors`, 272.6 XP on the same public bank, validator passed; immutable archive SHA-256 `e314dcd3ab9f690476eeaea45fab9104431996ced3116a3a8c02c18cf703b397`.
 - Fourth Taskmarket submission: `f248bcfa-d8f7-46c4-aedd-b4161da4da00`, transaction `0x20b2ee5fac5de71676b19134587789dd9fa88f904e56f700f2df0bdfc758e301` at `2026-08-27T22:58:48.203Z`.
-- Submission rule after the fourth upload: submit only a checkpoint that improves the best submitted public-bank score by at least 3 XP (currently at least 275.6 XP), or the best remaining unsubmitted checkpoint within two hours of expiry.
-- Checkpoint automation: `deathgym-taskmarket-checkpoints.timer` runs every five minutes. It locates the newest stable checkpoint across `long-5b` and `long-9b`, evaluates each archive once, validates its exact SHA-256, and requires an official Taskmarket artifact readback after any submission. A Taskmarket outage fails closed and is retried by the timer.
+- Fifth long-run checkpoint: `step1249M.safetensors`, 284.4 XP on the same public bank, validator passed; immutable archive SHA-256 `2df5a03cc44f73f47399a5b4e5722fe259e382d5a793387406f8e515e5a650b7`.
+- Fifth Taskmarket submission: `fc8f652b-a6bb-44e3-bef1-027c7880efb1`, transaction `0x68b54e19735adf739932a947e122f3d02bf9f5965a28f411127979311bdf4fcf` at `2026-08-28T00:23:21.811Z`.
+- Submission rule after the fifth upload: submit only a checkpoint that improves the best submitted public-bank score by at least 3 XP (currently at least 287.4 XP), or the best remaining unsubmitted checkpoint within two hours of expiry.
+- Checkpoint automation: `deathgym-taskmarket-checkpoints.timer` runs every five minutes. It locates the newest stable checkpoint across `long-5b` and `long-9b`, evaluates each archive once, validates its exact SHA-256, and requires an authenticated task-specific Taskmarket artifact readback after any submission. The cross-task submission projection is not used for idempotency because benchmark rows there can lag and omit artifact metadata. A Taskmarket outage fails closed and is retried by the timer.
 
 Run `node scripts/monitor-deathgym.mjs` from the repository root for the service state, progress, ETA, checkpoints, scored checkpoints, and independently published leaderboard rows keyed by worker address and archive hash.
 

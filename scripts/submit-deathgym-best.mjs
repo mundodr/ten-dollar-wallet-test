@@ -154,7 +154,11 @@ if (actualHash !== candidate.archiveSha256) {
   throw new Error(`Death Gym archive hash drift: ${actualHash}`);
 }
 
-const before = submissionList(run(["task", "my-submissions"]));
+// The cross-task `my-submissions` projection can lag and omits artifact metadata
+// for benchmark rows. The authenticated task-specific endpoint is authoritative
+// for idempotency because it returns the artifact SHA-256 needed to distinguish
+// checkpoints.
+const before = submissionList(run(["task", "submissions", taskId]));
 let official = before.find(
   (submission) =>
     submission.taskId?.toLowerCase() === taskId.toLowerCase() &&
@@ -169,7 +173,7 @@ if (!official) {
     240_000,
   );
   state = "submitted";
-  const after = submissionList(run(["task", "my-submissions"]));
+  const after = submissionList(run(["task", "submissions", taskId]));
   official = after.find(
     (submission) =>
       submission.taskId?.toLowerCase() === taskId.toLowerCase() &&
