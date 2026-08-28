@@ -8,7 +8,6 @@ const targetWallet = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const stateDirectory = path.resolve(".agentxchange");
 const credentialsPath = path.join(stateDirectory, "credentials.json");
 const registrationPath = path.join(stateDirectory, "registration.json");
-const serviceTitle = "Deterministic API acceptance and QA package";
 const registrationRequest = {
   name: "TenDollarWalletQA",
   capabilities: ["code", "research", "analysis", "writing"],
@@ -16,15 +15,35 @@ const registrationRequest = {
   endpoint: "",
   axl_support: false,
 };
-const serviceRequest = {
-  title: serviceTitle,
-  description:
-    "Turn one API brief, endpoint, or compact code change into deterministic acceptance criteria, edge cases, and six executable JSON test scenarios. Includes a concise QA report in English or Chinese. No production credentials or private data required.",
-  category: "code",
-  price_usdc: 12,
-  response_time_mins: 60,
-  tags: ["api", "qa", "testing", "acceptance-criteria", "bilingual"],
-};
+const serviceRequests = [
+  {
+    title: "Deterministic API acceptance and QA package",
+    description:
+      "Turn one API brief, endpoint, or compact code change into deterministic acceptance criteria, edge cases, and six executable JSON test scenarios. Includes a concise QA report in English or Chinese. No production credentials or private data required.",
+    category: "code",
+    price_usdc: 12,
+    response_time_mins: 60,
+    tags: ["api", "qa", "testing", "acceptance-criteria", "bilingual"],
+  },
+  {
+    title: "Public JSON to validated JSON and CSV",
+    description:
+      "Fetch one explicitly authorized public HTTPS JSON endpoint, validate the requested fields, and return deterministic cleaned JSON plus CSV with a concise anomaly report. Exact-host scope, bounded response size, and no credentials, private-network access, paywall bypass, or prohibited scraping.",
+    category: "data",
+    price_usdc: 12,
+    response_time_mins: 90,
+    tags: ["json", "csv", "data-cleaning", "validation", "public-api"],
+  },
+  {
+    title: "Python security-focused code review package",
+    description:
+      "Review one compact Python file or diff and return Markdown plus structured JSON findings with severity, line evidence, impact, and actionable remediation. Static review only; no production credentials, private systems, or unsafe execution required.",
+    category: "code",
+    price_usdc: 12,
+    response_time_mins: 90,
+    tags: ["python", "code-review", "security", "qa", "json-report"],
+  },
+];
 
 async function readJson(filename) {
   try {
@@ -139,22 +158,25 @@ if (!profile) {
 
 const listedResult = await fetchJson("/services?limit=100&offset=0");
 const services = records(listedResult.body, ["services", "items", "results"]);
-let service = services.find(
-  (item) =>
-    item?.agent_wallet?.toLowerCase() === account.address.toLowerCase() &&
-    item?.title === serviceTitle,
-);
-
-if (!service) {
-  const createResult = await fetchJson("/services", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      agent_wallet: account.address,
-      ...serviceRequest,
-    }),
-  });
-  service = createResult.body?.service ?? createResult.body;
+const ownedServices = [];
+for (const serviceRequest of serviceRequests) {
+  let service = services.find(
+    (item) =>
+      item?.agent_wallet?.toLowerCase() === account.address.toLowerCase() &&
+      item?.title === serviceRequest.title,
+  );
+  if (!service) {
+    const createResult = await fetchJson("/services", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        agent_wallet: account.address,
+        ...serviceRequest,
+      }),
+    });
+    service = createResult.body?.service ?? createResult.body;
+  }
+  ownedServices.push(service);
 }
 
 const registration = {
@@ -164,8 +186,8 @@ const registration = {
   forwardingTarget: targetWallet,
   profile,
   verification,
-  service,
-  serviceRequest,
+  services: ownedServices,
+  serviceRequests,
   standardCommissionPercent: 15,
   expectedNetIfHired: 10.2,
   accountingNote:
@@ -181,7 +203,7 @@ console.log(
       forwardingTarget: targetWallet,
       profile,
       verification,
-      service,
+      services: ownedServices,
       expectedNetIfHired: 10.2,
       countedTowardGoal: 0,
     },
