@@ -1,16 +1,17 @@
 # Frantic bounty 127 delivery report
 
-- Platform and byline: Medium profile `https://medium.com/@ten-dollar-wallet-lab` under `Ten Dollar Wallet Lab`; the final article is still pending.
+- Platform and byline: Medium profile `https://medium.com/@ten-dollar-wallet-lab` under `Ten Dollar Wallet Lab`; the live article is `https://medium.com/@ten-dollar-wallet-lab/from-one-openapi-file-to-a-searchable-static-docs-site-008c4becb645`.
 - Topic: generating a documentation site from an OpenAPI source with the open-source Sourcey generator.
 - Reproduction: `npx --yes sourcey@3.6.5 validate openapi.yaml` reported one operation and five schemas, then the pinned build completed in 0.9 seconds.
-- Dated sources: the article links the official OpenAPI integration guide, official introduction, and official Sourcey repository, all checked on 2026-08-27 UTC.
+- Fact location, section 1: the OpenAPI integration guide at `https://sourcey.com/docs/openapi-integration` supplied the dated OpenAPI 3.0, 3.1, and 3.2 support fact.
+- Fact location, section 3: the same integration guide supplied the dated default cURL, JavaScript, and Python code-sample fact.
+- Fact location, section 4: the introduction at `https://sourcey.com/docs/introduction` supplied the dated static HTML, CSS, script, `llms.txt`, and `llms-full.txt` output fact.
+- Fact location, section 4: the official repository at `https://github.com/sourcey/sourcey` supplied the dated AGPL-3.0 license fact.
 - Generated evidence: the build produced nine files including static HTML, search data, `llms.txt`, and `llms-full.txt`.
 - Word count: 892 words by `wc -w` in the article source before Medium rendering.
-- Prior-post count: two publicly retrievable earlier articles. The third is saved as Medium draft `621e00f86602`; Medium's rolling two-story limit permits the next attempt after 2026-08-28 19:02 UTC.
+- Prior-post count: three publicly retrievable earlier articles, satisfying the account-history gate before the final article was published.
 
-## Prepared publication text
-
-This section is the immutable candidate copy. It must not be described as published until the exact title and public URL appear in Medium's RSS feed.
+## Text as published
 
 # From One OpenAPI File to a Searchable Static Docs Site
 

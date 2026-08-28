@@ -2,7 +2,7 @@
   "summary": "A pinned Sourcey build turned the real progress endpoint contract into reproducible static documentation with dated primary-source checks.",
   "profile_url": "https://medium.com/@ten-dollar-wallet-lab",
   "account_created_at": "2026-08-27T18:36:00.000Z",
-  "prior_post_count": 2,
+  "prior_post_count": 3,
   "prior_posts": [
     {
       "title": "A Stable JSON Shape Is Part of an API Contract",
@@ -13,17 +13,16 @@
       "title": "Fail-Soft Fetching Without Hiding the Failure",
       "url": "https://medium.com/@ten-dollar-wallet-lab/fail-soft-fetching-without-hiding-the-failure-36413b17f170",
       "published_at": "2026-08-27T19:01:11.000Z"
+    },
+    {
+      "title": "A Platform Balance Is Not a Payment Receipt",
+      "url": "https://medium.com/@ten-dollar-wallet-lab/a-platform-balance-is-not-a-payment-receipt-621e00f86602",
+      "published_at": "2026-08-28T19:04:05.000Z"
     }
   ],
-  "pending_prior_post": {
-    "title": "A Platform Balance Is Not a Payment Receipt",
-    "draft_id": "621e00f86602",
-    "next_publish_attempt_after": "2026-08-28T19:02:00.000Z",
-    "reason": "Medium allows this author to publish or schedule at most two stories in a rolling 24-hour window."
-  },
-  "public_url": null,
+  "public_url": "https://medium.com/@ten-dollar-wallet-lab/from-one-openapi-file-to-a-searchable-static-docs-site-008c4becb645",
   "generated_demo_url": "https://mundodr.github.io/ten-dollar-wallet-test/sourcey-wallet-progress/",
-  "checked_at": "2026-08-27T19:01:30.000Z",
+  "checked_at": "2026-08-28T19:07:45.329Z",
   "observations": [
     {
       "fact": "Sourcey accepted the project's OpenAPI 3.1 YAML input and its official guide listed native OpenAPI 3.0, 3.1, and 3.2 support.",
