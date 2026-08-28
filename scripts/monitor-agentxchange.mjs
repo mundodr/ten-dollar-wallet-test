@@ -19,13 +19,30 @@ const erc20Abi = [
 ];
 
 async function fetchJson(resource) {
-  const response = await fetch(`${apiBase}${resource}`, {
-    signal: AbortSignal.timeout(20_000),
-    headers: {
-      accept: "application/json",
-      "user-agent": "ten-dollar-wallet-worker/1.0",
-    },
-  });
+  let response;
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      response = await fetch(`${apiBase}${resource}`, {
+        signal: AbortSignal.timeout(20_000),
+        headers: {
+          accept: "application/json",
+          "user-agent": "ten-dollar-wallet-worker/1.0",
+        },
+      });
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  if (!response) {
+    return {
+      ok: false,
+      status: 0,
+      body: { error: lastError?.message ?? "request failed after 3 attempts" },
+    };
+  }
   const raw = await response.text();
   let body;
   try {

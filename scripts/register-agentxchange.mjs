@@ -62,15 +62,30 @@ async function writePrivateJson(filename, value) {
 }
 
 async function fetchJson(resource, options = {}, accepted = [200]) {
-  const response = await fetch(`${apiBase}${resource}`, {
-    ...options,
-    signal: AbortSignal.timeout(20_000),
-    headers: {
-      accept: "application/json",
-      "user-agent": "ten-dollar-wallet-worker/1.0",
-      ...(options.headers ?? {}),
-    },
-  });
+  let response;
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      response = await fetch(`${apiBase}${resource}`, {
+        ...options,
+        signal: AbortSignal.timeout(20_000),
+        headers: {
+          accept: "application/json",
+          "user-agent": "ten-dollar-wallet-worker/1.0",
+          ...(options.headers ?? {}),
+        },
+      });
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  if (!response) {
+    throw new Error(
+      `${options.method ?? "GET"} ${resource} failed after 3 network attempts: ${lastError?.message ?? "request failed"}`,
+    );
+  }
   const raw = await response.text();
   let body;
   try {
@@ -159,6 +174,7 @@ if (!profile) {
 const listedResult = await fetchJson("/services?limit=100&offset=0");
 const services = records(listedResult.body, ["services", "items", "results"]);
 const ownedServices = [];
+const createdServiceIds = [];
 for (const serviceRequest of serviceRequests) {
   let service = services.find(
     (item) =>
@@ -175,6 +191,7 @@ for (const serviceRequest of serviceRequests) {
       }),
     });
     service = createResult.body?.service ?? createResult.body;
+    if (service?.id != null) createdServiceIds.push(service.id);
   }
   ownedServices.push(service);
 }
@@ -198,12 +215,17 @@ await writePrivateJson(registrationPath, registration);
 console.log(
   JSON.stringify(
     {
-      status: verification ? "registered_and_listed" : "already_registered_and_listed",
+      status: verification
+        ? "registered_and_listed"
+        : createdServiceIds.length > 0
+          ? "expanded_listing"
+          : "already_registered_and_listed",
       workerWallet: account.address,
       forwardingTarget: targetWallet,
       profile,
       verification,
       services: ownedServices,
+      createdServiceIds,
       expectedNetIfHired: 10.2,
       countedTowardGoal: 0,
     },
