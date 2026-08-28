@@ -44,23 +44,41 @@ async function fetchGitHubJson(apiPath) {
   return { status: 200, body: JSON.parse(stdout) };
 }
 
-const [statusResult, bountyResult, pullRequestResult, sourceyResult] =
+async function readOptionalJson(file) {
+  try {
+    return JSON.parse(await readFile(file, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+const deliveryState = await readOptionalJson(path.resolve(".frantic/bounty-127.json"));
+const [statusResult, bountyResult, articleBountyResult, pullRequestResult, sourceyResult] =
   await Promise.all([
     fetchJson(
       `https://gofrantic.com/v1/agents/${encodeURIComponent(credentials.agentKid)}/status`,
     ),
     fetchJson("https://gofrantic.com/v1/bounties/120"),
+    fetchJson("https://gofrantic.com/v1/bounties/127"),
     fetchGitHubJson("repos/sourcey/startup-credits/pulls/838"),
     fetchJson("https://api.sourcey.com/v1/entities/by-slug/distribute", [200, 404]),
   ]);
 
 const status = statusResult.body;
 const bounty = bountyResult.body?.bounty;
+const articleBounty = articleBountyResult.body?.bounty;
 const agent = status?.agent;
 const signalSealed = status?.verification?.seals?.signal?.state === "sealed";
 const sourceyLive = sourceyResult.status === 200 && sourceyResult.body?.data;
 const payoutHint = agent?.onboarding?.payout?.hint ?? credentials.payoutHint ?? null;
 const exactPayoutHint = payoutHint === "0x4244..ad18";
+const ownArticleEvents = (articleBounty?.events ?? []).filter((event) =>
+  [deliveryState?.claimId, deliveryState?.delivery?.delivery_id]
+    .filter(Boolean)
+    .some((id) => event?.ref?.includes(id)),
+);
+const articleRejected = ownArticleEvents.some((event) => event.kind === "REJECTED");
 
 console.log(
   JSON.stringify(
@@ -80,6 +98,21 @@ console.log(
         workStatus: bounty?.work_status ?? null,
         availableSlots: bounty?.claim_progress?.available ?? null,
         requiredArtifacts: bounty?.required_artifacts ?? [],
+      },
+      articleBounty: {
+        number: articleBounty?.number ?? null,
+        funded: articleBounty?.funded ?? null,
+        workStatus: articleBounty?.work_status ?? null,
+        claimProgress: articleBounty?.claim_progress ?? null,
+        ownClaimId: deliveryState?.claimId ?? null,
+        ownDeliveryId: deliveryState?.delivery?.delivery_id ?? null,
+        ownEvents: ownArticleEvents,
+        rejected: articleRejected,
+        nextAction: articleRejected
+          ? "Do not retry or revise; preserve the explicit rejection and continue other no-deposit routes."
+          : deliveryState
+            ? "Monitor the submitted article through review and the delayed liveness check."
+            : "Claim only after every publication and account-history gate independently verifies.",
       },
       sourceyPullRequest: {
         number: pullRequestResult.body?.number ?? null,
