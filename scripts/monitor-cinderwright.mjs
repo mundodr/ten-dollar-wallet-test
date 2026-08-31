@@ -3,6 +3,11 @@ const submissionId = "sub_1787832950016";
 const serviceName = "Deterministic API Brief Acceptance Checklist";
 const serviceUrl =
   "https://payanagent.com/x402/kh7ezjzt4etk8x1s908z7wngqn8d89hx";
+const codeReviewSubmissionId = "sub_1788204559284";
+const codeReviewServiceName =
+  "Deterministic Python Security Review (One File)";
+const codeReviewServiceUrl =
+  "https://payanagent.com/x402/kh7csa6y1atvzs35bneg89xx0d8dhm2d";
 
 async function fetchJson(url) {
   let lastError;
@@ -25,14 +30,25 @@ async function fetchJson(url) {
   throw lastError ?? new Error("Cinderwright returned no response");
 }
 
-const query = new URL("/discover", hubUrl);
-query.searchParams.set("q", serviceName);
-const discovery = await fetchJson(query);
-const results = Array.isArray(discovery?.results) ? discovery.results : [];
-const indexedResult = results.find((result) => {
-  const candidateUrl = result?.url ?? result?.endpoint ?? result?.service_url;
-  return candidateUrl === serviceUrl || result?.name === serviceName;
-});
+async function discoverService(name, url) {
+  const query = new URL("/discover", hubUrl);
+  query.searchParams.set("q", name);
+  const discovery = await fetchJson(query);
+  const results = Array.isArray(discovery?.results) ? discovery.results : [];
+  const indexedResult = results.find((result) => {
+    const candidateUrl = result?.url ?? result?.endpoint ?? result?.service_url;
+    return candidateUrl === url || result?.name === name;
+  });
+  return {
+    indexedResult: indexedResult ?? null,
+    total: discovery?.total ?? null,
+  };
+}
+
+const [acceptance, codeReview] = await Promise.all([
+  discoverService(serviceName, serviceUrl),
+  discoverService(codeReviewServiceName, codeReviewServiceUrl),
+]);
 
 console.log(
   JSON.stringify(
@@ -41,10 +57,21 @@ console.log(
       submissionId,
       serviceName,
       serviceUrl,
-      status: indexedResult ? "indexed" : "queued",
-      indexed: Boolean(indexedResult),
-      hubReportedTotal: discovery?.total ?? null,
-      result: indexedResult ?? null,
+      status: acceptance.indexedResult ? "indexed" : "queued",
+      indexed: Boolean(acceptance.indexedResult),
+      hubReportedTotal: acceptance.total,
+      result: acceptance.indexedResult,
+      codeReview: {
+        submissionId: codeReviewSubmissionId,
+        serviceName: codeReviewServiceName,
+        serviceUrl: codeReviewServiceUrl,
+        status: codeReview.indexedResult ? "indexed" : "queued",
+        indexed: Boolean(codeReview.indexedResult),
+        hubReportedTotal: codeReview.total,
+        result: codeReview.indexedResult,
+      },
+      countingPolicy:
+        "Submissions and index rows are discovery evidence only. Never self-buy. Count only an independently verified Base-mainnet target receipt.",
     },
     null,
     2,
