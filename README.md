@@ -1,10 +1,10 @@
-# The $10 Wallet Test / 十美元钱包实验
+# The $100 Wallet Goal / 百美元钱包目标
 
-![The $10 Wallet Test](docs/og.png)
+![The $100 wallet goal](docs/og-100.png)
 
-Can tiny gifts across four public blockchain routes reach a combined **$10**?
+Can small gifts and original-work earnings across four public blockchain routes reach a combined **$100**?
 
-陌生人的微小善意，能否让 Solana、BNB Smart Chain、Base 和 TRON 上的公开地址合计达到 **10 美元**？
+公开的小额赠与与原创工作收入，能否让 Solana、BNB Smart Chain、Base 和 TRON 上的公开地址合计达到 **100 美元**？
 
 ## [Open the donation page / 打开募捐页](https://mundodr.github.io/ten-dollar-wallet-test/)
 

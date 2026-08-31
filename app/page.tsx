@@ -6,6 +6,7 @@ const SOL_ADDRESS = "o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt";
 const BNB_ADDRESS = "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const BASE_ADDRESS = BNB_ADDRESS;
 const TRON_ADDRESS = "TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk";
+const GOAL_USD = 100;
 
 type WalletCardProps = {
   id: "solana" | "bnb" | "base" | "tron";
@@ -109,13 +110,13 @@ export default function Home() {
 
   const funded = progress?.usdTotal ?? 0;
   const percent = progress?.percent ?? 0;
-  const remaining = Math.max(0, 10 - funded);
+  const remaining = Math.max(0, GOAL_USD - funded);
 
   return (
     <main>
       <nav className="nav shell" aria-label="Main navigation">
-        <a className="wordmark" href="#top" aria-label="The ten dollar wallet test home">
-          <span>10</span> / TEN
+        <a className="wordmark" href="#top" aria-label="The hundred dollar wallet goal home">
+          <span>100</span> / HUNDRED
         </a>
         <a className="ledger-link" href="#wallets">
           <i /> 公开账本 · PUBLIC LEDGER
@@ -128,13 +129,13 @@ export default function Home() {
           <h1>
             让四条链的小额到账
             <br />
-            合计达到 <em>$10</em>
+            合计达到 <em>$100</em>
           </h1>
           <p className="lead-cn">
-            这不是慈善，也没有编造困难。我们只是诚实地问：陌生人的微小善意，能否让 Solana、BNB Smart Chain、Base 和 TRON 上的公开地址合计达到 10 美元？
+            这不是慈善，也没有编造困难。我们只是诚实地问：公开的小额赠与与原创工作收入，能否让 Solana、BNB Smart Chain、Base 和 TRON 上的公开地址合计达到 100 美元？
           </p>
           <p className="lead-en">
-            No hardship story. No token sale. Can tiny gifts across four public blockchain routes reach a combined $10?
+            No hardship story. No token sale. Can small gifts and original-work earnings across four public blockchain routes reach a combined $100?
           </p>
           <div className="hero-actions">
             <a className="primary-button" href="#wallets">选择网络 · CHOOSE A NETWORK ↓</a>
@@ -142,14 +143,14 @@ export default function Home() {
           </div>
         </div>
 
-        <aside className="target-card" aria-label="Donation progress: zero of ten dollars">
+        <aside className="target-card" aria-label="Verified wallet progress toward one hundred dollars">
           <div className="target-card__header">
             <span>目标 / TARGET</span>
             <span className="verified">链上可查 · ON-CHAIN</span>
           </div>
           <div className="amount-row">
           <strong>${funded.toFixed(2)}</strong>
-            <span>/ $10.00</span>
+            <span>/ $100.00</span>
           </div>
           <div className="progress-track" aria-hidden="true"><span style={{ width: `${Math.max(percent > 0 ? 1 : 0.2, percent)}%` }} /></div>
           <div className="progress-meta">
@@ -180,7 +181,7 @@ export default function Home() {
           <span>NO TRAGEDY STORY</span><i>◆</i>
           <span>NO TOKEN SALE</span><i>◆</i>
           <span>NO RETURNS PROMISED</span><i>◆</i>
-          <span>JUST A $10 EXPERIMENT</span><i>◆</i>
+          <span>THE $100 WALLET GOAL</span><i>◆</i>
         </div>
       </section>
 
@@ -259,7 +260,7 @@ export default function Home() {
       </section>
 
       <footer className="shell">
-        <span>THE $10 WALLET TEST · 2026</span>
+        <span>THE $100 WALLET GOAL · 2026</span>
         <a href="https://github.com/mundodr/ten-dollar-wallet-test/issues/2" target="_blank" rel="noreferrer">
           2 USDC WORK OFFER ↗
         </a>

@@ -18,12 +18,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost";
   const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const base = new URL(`${protocol}://${host}`);
-  const image = new URL("/og.png", base).toString();
+  const image = new URL("/og-100.png", base).toString();
 
   return {
     metadataBase: base,
-    title: "The $10 Wallet Test · 透明的十美元实验",
-    description: "Can tiny gifts across four public blockchain routes reach a combined $10? An honest, verifiable experiment.",
+    title: "The $100 Wallet Goal · 透明的百美元目标",
+    description: "Can small gifts and original-work earnings across four public blockchain routes reach a combined $100? An honest, verifiable experiment.",
     alternates: {
       canonical: "/",
       types: {
@@ -33,14 +33,14 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
     openGraph: {
-      title: "The $10 Wallet Test",
+      title: "The $100 Wallet Goal",
       description: "A transparent internet generosity experiment.",
       type: "website",
-      images: [{ url: image, width: 1672, height: 941, alt: "The $10 Wallet Test" }],
+      images: [{ url: image, width: 1672, height: 941, alt: "The $100 Wallet Goal" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "The $10 Wallet Test",
+      title: "The $100 Wallet Goal",
       description: "A transparent internet generosity experiment.",
       images: [image],
     },

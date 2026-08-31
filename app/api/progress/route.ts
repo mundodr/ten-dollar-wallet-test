@@ -7,6 +7,7 @@ const BSC_USDT = "0x55d398326f99059fF775485246999027B3197955";
 const BSC_USDC = "0x8AC76a51cc950d9822D68b83Fe1Ad97B32Cd580d";
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const TRON_USDT = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
+const GOAL_USD = 100;
 
 async function rpc<T>(url: string, method: string, params: unknown[]): Promise<T> {
   const response = await fetch(url, {
@@ -150,7 +151,8 @@ export async function GET() {
       balances: { sol, solUsdc, bnb, bscUsdt, bscUsdc, baseEth, baseUsdc, trx: tron.trx, tronUsdt: tron.tronUsdt },
       prices: market,
       usdTotal,
-      percent: Math.min(100, (usdTotal / 10) * 100),
+      goalUsd: GOAL_USD,
+      percent: Math.min(100, (usdTotal / GOAL_USD) * 100),
       updatedAt: new Date().toISOString(),
     },
     { headers: { "cache-control": "public, max-age=30, s-maxage=60" } },

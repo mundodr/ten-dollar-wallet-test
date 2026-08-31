@@ -9,6 +9,7 @@ const BSC_USDT = "0x55d398326f99059fF775485246999027B3197955";
 const BSC_USDC = "0x8AC76a51cc950d9822D68b83Fe1Ad97B32Cd580d";
 const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const TRON_USDT = "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj";
+const GOAL_USD = 100;
 const PAGE = new URL("../docs/index.html", import.meta.url);
 const BSC_RPC_URLS = [
   "https://bsc-dataseed.binance.org",
@@ -142,10 +143,10 @@ const total =
   baseEth * prices.eth +
   tron.trx * prices.trx +
   stable;
-const percent = Math.min(100, total * 10);
+const percent = Math.min(100, (total / GOAL_USD) * 100);
 const display = {
   total: `$${total.toFixed(2)}`,
-  remaining: `$${Math.max(0, 10 - total).toFixed(2)} TO GO`,
+  remaining: `$${Math.max(0, GOAL_USD - total).toFixed(2)} TO GO`,
   percent: `${percent.toFixed(1)}% FUNDED`,
   sol: sol.toFixed(6),
   bnb: bnb.toFixed(6),
@@ -157,6 +158,8 @@ const display = {
 let html = await readFile(PAGE, "utf8");
 if (
   currentText(html, "usd-total") === display.total &&
+  currentText(html, "remaining") === display.remaining &&
+  currentText(html, "percent") === display.percent &&
   currentText(html, "sol-balance") === display.sol &&
   currentText(html, "bnb-balance") === display.bnb &&
   currentText(html, "base-balance") === display.baseEth &&
@@ -179,7 +182,7 @@ html = replaceText(html, "updated", `余额快照 · ${new Date().toLocaleString
 html = html.replace(/(<i id="progress-fill" style="width:)[^"]+(%">)/, `$1${Math.max(0.2, percent).toFixed(1)}$2`);
 await writeFile(PAGE, html);
 
-if (total >= 10) {
+if (total >= GOAL_USD) {
   await writeFile(new URL("../.goal-reached", import.meta.url), `Reached ${display.total} at ${new Date().toISOString()}\n`);
 }
 

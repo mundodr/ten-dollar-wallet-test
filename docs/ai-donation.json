@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
-  "name": "The $10 Wallet Test",
+  "name": "The $100 Wallet Goal",
   "canonical_url": "https://mundodr.github.io/ten-dollar-wallet-test/",
   "repository_url": "https://github.com/mundodr/ten-dollar-wallet-test",
   "kind": "voluntary_personal_gift_experiment",
-  "goal_usd": 10,
+  "goal_usd": 100,
   "disclosures": {
     "charity": false,
     "hardship_claim": false,

@@ -1,8 +1,8 @@
-# Share the $10 Wallet Test / 分享十美元钱包实验
+# Share the $100 Wallet Goal / 分享百美元钱包目标
 
 ## English
 
-**Can two empty crypto wallets reach $10 through tiny internet gifts?**
+**Can public crypto wallets reach $100 through small internet gifts and original-work earnings?**
 
 This is a transparent experiment—not a charity, hardship claim, token sale, raffle, or investment. Starting balances were zero, the wallets are public, and every amount can be verified on-chain.
 
@@ -19,7 +19,7 @@ Any amount—even less than $1—counts. Please verify the network and address b
 
 ## 中文
 
-**两个余额为零的加密货币钱包，能否通过陌生人的微小赠与达到 10 美元？**
+**公开的加密货币钱包，能否通过小额赠与和原创工作收入达到 100 美元？**
 
 这是一个透明实验，不是慈善项目，不编造困难，不销售代币，不抽奖，也不承诺投资回报。两个钱包的起始余额均为零，所有到账都可以在链上核验。
 

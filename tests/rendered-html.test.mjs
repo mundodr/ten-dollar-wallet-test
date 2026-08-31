@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
-
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
 
 async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -28,64 +23,73 @@ async function render() {
   );
 }
 
-test("server-renders the starter loading skeleton", async () => {
+test("server-renders the hundred-dollar wallet goal", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Building your site/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(
+  assert.match(html, /<title>The \$100 Wallet Goal/);
+  assert.match(html, /合计达到 <em>\$100<\/em>/);
+  assert.match(html, /\/ \$100\.00/);
+  assert.match(html, /<span>100<\/span> \/ HUNDRED/);
+  assert.match(html, /o9mfxQnHja71MNvU81gdx4VtFaYRGxGFLKDjPJKiPYt/);
+  assert.match(html, /0x4244f335c42ebd82dbd1378a9cb192f582d9ad18/);
+  assert.doesNotMatch(html, /ETHEREUM/);
+  assert.match(html, /TVa6sSVC4B8fKq3S8qDLKQSaYRvhkPgRBk/);
+  assert.doesNotMatch(
     html,
-    /Your first version will appear here automatically when it’s ready\./,
+    /合计达到 <em>\$10<\/em>|\/ \$10\.00|<span>10<\/span> \/ TEN/,
   );
-  assert.doesNotMatch(html, /Codex/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
 });
 
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
-  ]);
+test("keeps the hundred-dollar target and four chains consistent", async () => {
+  const [page, layout, progressRoute, updater, publicMetadata, docsMetadata] =
+    await Promise.all([
+      readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+      readFile(
+        new URL("../app/api/progress/route.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../scripts/update-static-progress.mjs", import.meta.url),
+        "utf8",
+      ),
+      readFile(new URL("../public/ai-donation.json", import.meta.url), "utf8"),
+      readFile(new URL("../docs/ai-donation.json", import.meta.url), "utf8"),
+    ]);
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
+  assert.match(page, /const GOAL_USD = 100;/);
+  assert.match(layout, /The \$100 Wallet Goal/);
+  assert.match(progressRoute, /const GOAL_USD = 100;/);
+  assert.match(updater, /const GOAL_USD = 100;/);
+  assert.equal(JSON.parse(publicMetadata).goal_usd, 100);
+  assert.equal(JSON.parse(docsMetadata).goal_usd, 100);
+  for (const metadata of [
+    JSON.parse(publicMetadata),
+    JSON.parse(docsMetadata),
+  ]) {
+    assert.equal(metadata.routes.length, 4);
+    assert.equal(
+      metadata.routes.some((route) => route.network === "ethereum-mainnet"),
+      false,
+    );
+  }
+  assert.doesNotMatch(progressRoute, /ethereumEthBalance|ETHEREUM_RPC_URLS/);
+  assert.doesNotMatch(updater, /ethereumEth|ETHEREUM_RPC_URLS/);
 
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
-  );
-
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
-
-  await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
-  );
+  for (const source of [
+    page,
+    layout,
+    progressRoute,
+    updater,
+    publicMetadata,
+    docsMetadata,
+  ]) {
+    assert.doesNotMatch(
+      source,
+      /GOAL_USD\s*=\s*10;|"goal_usd"\s*:\s*10(?:\D|$)/,
+    );
+  }
 });
