@@ -1,7 +1,12 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 const apiUrl = "https://api.x402.jobs";
 const targetBaseWallet =
   "0x4244f335c42ebd82dbd1378a9cb192f582d9ad18";
 const baseUsdc = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const x402JobsBaseEscrow = "0xAEB58049d3C266D55595a596Fae249C10764a031";
+const jobStatePath = path.resolve(".x402jobs/code-review-job-state.json");
 
 const expectedResources = [
   {
@@ -132,7 +137,86 @@ async function inspectResource(expected) {
   };
 }
 
-const resources = await Promise.all(expectedResources.map(inspectResource));
+async function inspectPublishedJob() {
+  const state = await readFile(jobStatePath, "utf8")
+    .then(JSON.parse)
+    .catch((error) => {
+      if (error?.code === "ENOENT") return null;
+      throw error;
+    });
+  if (!state) return null;
+
+  const publicUrl = new URL("/jobs/public", apiUrl);
+  publicUrl.searchParams.set("search", state.jobName);
+  publicUrl.searchParams.set("limit", "100");
+  const publicResult = await fetchResponse(publicUrl, {
+    headers: { Accept: "application/json" },
+  });
+  const job = (publicResult.body?.jobs ?? []).find(
+    (candidate) => candidate.id === state.jobId,
+  );
+  if (!job?.webhook_url) {
+    return {
+      jobId: state.jobId,
+      listed: false,
+      exact: false,
+    };
+  }
+
+  const probe = await fetchResponse(job.webhook_url, {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ code: "print('hello')" }),
+  });
+  const challenge = decodeChallenge(probe);
+  const payment = challenge?.accepts?.[0];
+  const amount =
+    challenge?.x402Version === 1
+      ? payment?.maxAmountRequired
+      : payment?.amount;
+  const resource =
+    challenge?.x402Version === 1
+      ? payment?.resource
+      : challenge?.resource?.url;
+  const exactChallenge =
+    probe.response.status === 402 &&
+    [1, 2].includes(challenge?.x402Version) &&
+    payment?.scheme === "exact" &&
+    ["base", "eip155:8453"].includes(payment?.network) &&
+    amount === state.buyerAmountBaseUnits &&
+    resource === job.webhook_url &&
+    String(payment?.asset).toLowerCase() === baseUsdc.toLowerCase() &&
+    String(payment?.payTo).toLowerCase() === x402JobsBaseEscrow.toLowerCase();
+  const exactListing =
+    publicResult.response.ok &&
+    job.network === "base" &&
+    Number(job.price) === Number(state.buyerAmountBaseUnits) / 1_000_000 &&
+    Number(job.baseCost) === Number(state.buyerAmountBaseUnits) / 1_000_000 &&
+    Number(job.creatorMarkup) === 0;
+
+  return {
+    jobId: state.jobId,
+    name: state.jobName,
+    publicPage: state.publicPage,
+    webhookUrl: job.webhook_url,
+    listed: true,
+    exact: exactListing && exactChallenge,
+    exactListing,
+    exactChallenge,
+    buyerPriceUsdc: Number(state.buyerAmountBaseUnits) / 1_000_000,
+    downstreamPriceUsdc: Number(state.resourceAmountBaseUnits) / 1_000_000,
+    creatorMarkupUsdc: Number(job.creatorMarkup),
+    runCount: Number(job.run_count ?? 0),
+    successfulRuns30d: Number(job.success_count_30d ?? 0),
+    failedRuns30d: Number(job.failure_count_30d ?? 0),
+    totalEarningsUsdc: Number(job.total_earnings_usdc ?? job.earnings ?? 0),
+  };
+}
+
+const [resources, publishedJob] = await Promise.all([
+  Promise.all(expectedResources.map(inspectResource)),
+  inspectPublishedJob(),
+]);
 const exactResourceCount = resources.filter(
   (resource) => resource.exactResource && resource.challengeExact,
 ).length;
@@ -155,8 +239,9 @@ console.log(
       calls,
       totalEarnedUsdc,
       resources,
+      publishedJob,
       countingPolicy:
-        "Catalog rows and call counters are discovery signals only. Count only an independently verified Base-mainnet transfer to the disclosed target wallet.",
+        "Catalog rows, job runs, and earnings counters are discovery signals only. Never self-buy. Count only an independently verified Base-mainnet transfer to the disclosed target wallet.",
     },
     null,
     2,
@@ -165,4 +250,7 @@ console.log(
 
 if (exactResourceCount !== expectedResources.length) {
   throw new Error("One or more x402.jobs resources drifted from their exact Base payment terms");
+}
+if (publishedJob && !publishedJob.exact) {
+  throw new Error("The published x402.jobs workflow drifted from its exact buyer terms");
 }
