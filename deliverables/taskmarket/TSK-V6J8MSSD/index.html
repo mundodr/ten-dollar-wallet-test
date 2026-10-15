@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Signal Garden · human + agent strategy</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:#eff4ff;background:#0b1020}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 18% 8%,#283a55 0,#101829 34%,#0b1020 72%)}button,input{font:inherit}button{cursor:pointer}header{max-width:1150px;margin:auto;padding:32px 22px 12px}h1{margin:0;font-size:clamp(2.2rem,5vw,4.1rem);letter-spacing:-.05em;line-height:1.02}h1 span{color:#8be0b7}.eyebrow{color:#9baaca;letter-spacing:.17em;text-transform:uppercase;font-size:.72rem;font-weight:800}p{color:#aab8d1;line-height:1.55}main{max-width:1150px;margin:auto;padding:18px 22px 40px;display:grid;grid-template-columns:minmax(320px,1.35fr) minmax(280px,.8fr);gap:20px}@media(max-width:800px){main{grid-template-columns:1fr}}.panel{background:#172137d9;border:1px solid #34425c;border-radius:18px;padding:21px;box-shadow:0 22px 60px #0004}.panel h2{font-size:1rem;margin:0 0 13px;letter-spacing:.06em;text-transform:uppercase;color:#cad8ef}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{min-width:0}input{background:#0c1425;border:1px solid #3b4c69;border-radius:9px;padding:10px 12px;color:#fff;min-width:110px}input:focus,button:focus-visible{outline:2px solid #83e7c4;outline-offset:2px}button{border:1px solid #4d6181;border-radius:9px;background:#263957;color:#edf5ff;padding:10px 14px;font-weight:700}button:hover{background:#345273}button:disabled{opacity:.42;cursor:not-allowed}button.primary{background:#8ce5be;color:#10243a;border-color:#8ce5be}button.primary:hover{background:#b1f5d7}.pill{border-radius:30px;padding:5px 10px;border:1px solid #455775;color:#c8d6ec;font-size:.82rem}.pill.active{background:#9ce8c3;color:#11243a;border-color:#9ce8c3}.hidden{display:none!important}.board{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;width:min(100%,510px);margin:18px auto}.tile{aspect-ratio:1;border:1px solid #39465d;background:linear-gradient(145deg,#1f2d47,#15243d);border-radius:11px;position:relative;padding:4px;transition:transform .16s,box-shadow .16s;color:#d9e6f8}.tile:hover{transform:translateY(-2px)}.tile.legal{box-shadow:inset 0 0 0 2px #8ce5be,0 0 20px #8ce5be44}.tile .mark{font-size:clamp(1rem,3vw,1.6rem)}.tile .shield{position:absolute;right:6px;bottom:5px;font-size:.72rem}.tile[data-owner="0"]{background:#275a68}.tile[data-owner="1"]{background:#633f64}.tile[data-owner="2"]{background:#6b522f}.tile[data-owner="3"]{background:#3e536e}.tile .beacon{position:absolute;top:5px;right:7px;color:#ffe59b;font-size:.82rem}.status{font-size:1.15rem;font-weight:800;margin:4px 0}.muted{font-size:.9rem;color:#a4b2cc}.scores{display:grid;gap:7px;margin:14px 0}.score{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid #3b4b66;border-radius:10px}.score.current{border-color:#8ce5be}.controls{display:flex;gap:8px;flex-wrap:wrap}.controls button.selected{background:#8ce5be;color:#10243a}.log{height:215px;overflow:auto;border-top:1px solid #394b65;padding-top:10px}.log div{padding:5px 0;color:#b7c6df;font-size:.88rem;border-bottom:1px solid #ffffff12}.link{color:#94ebc4;overflow-wrap:anywhere}.small{font-size:.8rem}.topline{display:flex;justify-content:space-between;align-items:center;gap:10px}#toast{min-height:22px;color:#f8c689;font-size:.88rem;margin:10px 0}footer{max-width:1150px;margin:auto;padding:0 22px 28px;color:#8a9bb8;font-size:.82rem}
+  </style>
+</head>
+<body>
+<header><div class="eyebrow">A tiny territory contest · no account required</div><h1>Signal <span>Garden</span></h1><p>Plant a route, protect your beacons, and outthink humans or bots. Two to four players, one shared board, under ten minutes.</p></header>
+<main>
+  <section class="panel">
+    <div class="topline"><h2>Match board</h2><span class="pill" id="code-pill">No match</span></div>
+    <div id="setup">
+      <p>Create a match and share its eight-character code, or join a friend's match. Empty seats become bots when the host starts.</p>
+      <div class="row"><input id="name" maxlength="24" placeholder="Your name" value="Gardener"><input id="seats" type="number" min="2" max="4" value="2" style="width:64px"><button class="primary" id="create">Create match</button></div>
+      <div class="row" style="margin-top:10px"><input id="join-code" maxlength="8" placeholder="Match code"><button id="join">Join match</button></div>
+    </div>
+    <div id="game" class="hidden">
+      <div id="status" class="status"></div><div id="hint" class="muted"></div>
+      <div id="board" class="board" aria-label="Five by five game board"></div>
+      <div class="controls" id="controls"><button data-action="plant" class="selected">Plant · 2 ✦</button><button data-action="raid">Raid · 2 ✦</button><button data-action="shield">Shield · 1 ✦</button><button data-action="recharge">Recharge · +2 ✦</button></div>
+      <p class="small">Select an action and a highlighted tile. ★ is a three-point beacon. Sh/🛡 adds one defense and one final point. Your turn has 18 seconds.</p>
+      <div class="row"><button class="primary hidden" id="start">Start · fill vacant seats with bots</button><button id="copy">Copy invite link</button><a class="link small" id="replay" href="#">Replay JSON</a></div>
+    </div>
+    <div id="toast" role="status"></div>
+  </section>
+  <aside class="panel"><h2>Scoreboard</h2><div id="scores" class="scores"></div><h2>Match log</h2><div id="log" class="log"></div><h2>Rules in a breath</h2><p>Start at a corner. Every turn grants one spark; plant adjacent ground, raid exposed rivals, shield a tile, or recharge. At the end, tiles score one, beacons three, shields one extra. Most points wins.</p><p class="small">Agents: <a class="link" href="https://github.com/mundodr/ten-dollar-wallet-test/tree/codex/signal-garden-taskmarket/deliverables/taskmarket/TSK-V6J8MSSD">read the JSON API and sample bot</a>.</p></aside>
+</main>
+<footer>Signal Garden is an original, small-scope TaskMarket entry. A match is public to anyone with its code; keep your seat token private.</footer>
+<script src="/signal-garden/client.js" defer></script>
+</body>
+</html>
